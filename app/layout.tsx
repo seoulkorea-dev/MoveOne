@@ -28,6 +28,11 @@ export default function RootLayout({
           Atkinson Hyperlegible Next 는 이름이 길고 변형이 잦아
           next/font/google 의 타입 목록과 어긋나면 빌드가 통째로 깨집니다.
           시안(Stitch code.html)도 같은 방식으로 불러옵니다.
+
+          한글 1순위는 맑은 고딕(시스템 폰트)이라 내려받지 않습니다.
+          Noto Sans KR 은 맑은 고딕이 없는 기기(안드로이드·리눅스)를 위한
+          마지막 폴백이고, 브라우저는 실제로 쓰이는 폰트만 내려받으므로
+          Windows 에서는 이 파일이 다운로드되지 않습니다.
         */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

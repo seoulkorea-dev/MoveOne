@@ -69,7 +69,14 @@ function loadKakaoSdk(appKey: string): Promise<void> {
       }
       window.kakao.maps.load(done);
     };
-    script.onerror = () => fail("카카오맵 SDK를 불러오지 못했습니다");
+    // script 태그는 실패 이유(HTTP 상태)를 알려주지 않습니다.
+    // 원인이 거의 정해져 있으므로 후보를 메시지에 담아 둡니다.
+    script.onerror = () =>
+      fail(
+        "카카오맵 SDK를 불러오지 못했습니다. " +
+          "① 카카오 콘솔 > 플랫폼 > Web 에 http://localhost:4100 이 등록됐는지 " +
+          "② NEXT_PUBLIC_KAKAO_JS_KEY 가 REST 키가 아니라 JavaScript 키인지 확인하세요.",
+      );
     document.head.appendChild(script);
   });
 
@@ -254,7 +261,12 @@ export function RouteMap({
       })
       .catch((cause) => {
         // 도메인 미등록이 가장 흔한 원인입니다.
-        log.error("지도 로드 실패", { message: String(cause?.message ?? cause).slice(0, 160) });
+        log.error("지도 로드 실패", {
+          message: String(cause?.message ?? cause).slice(0, 240),
+          // 키 값은 남기지 않고 앞 4자리만 — 어떤 키를 쓰는지 구분하기 위해서입니다.
+          keyPrefix: appKey ? `${appKey.slice(0, 4)}…(${appKey.length}자)` : "없음",
+          origin: typeof window === "undefined" ? "" : window.location.origin,
+        });
         if (!cancelled) setStatus("failed");
       });
 
@@ -299,6 +311,9 @@ export function RouteMap({
               <Icon name="map" size={28} className="text-outline" />
               <span className="font-label-md text-label-md text-on-surface-variant tracking-normal">
                 지도를 표시할 수 없습니다. 경로 안내는 아래에서 그대로 확인하세요.
+              </span>
+              <span className="font-label-md text-label-md text-outline tracking-normal">
+                카카오 콘솔의 플랫폼 &gt; Web 에 이 주소가 등록돼 있어야 합니다
               </span>
             </>
           )}

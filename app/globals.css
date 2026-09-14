@@ -8,10 +8,15 @@
    달라서 참고만 했습니다. 실제로 렌더된 config 가 정본입니다.
 
    원본에서 고친 것은 두 가지뿐입니다.
-     1. 한글 폰트 폴백(Noto Sans KR) 추가.
+     1. 한글 폰트 스택(--font-kr) 추가.
         Barlow Condensed 와 Atkinson Hyperlegible Next 는 라틴 전용이라
         한글이 없습니다. 숫자·영문만 원본 폰트를 쓰고 한글은 폴백으로
-        내려가도록 스택 순서를 잡았습니다.
+        내려가도록 스택 순서를 잡았습니다. 한글 1순위는 맑은 고딕입니다.
+
+        영문·숫자까지 전부 맑은 고딕으로 통일하고 싶으면, 아래 --font-*
+        정의에서 앞의 라틴 폰트 이름만 지우고 var(--font-kr) 만 남기세요.
+        단 --font-headline-xl 과 --font-code-time 은 큰 숫자(소요 시간)
+        자리라 Barlow Condensed 를 남겨두는 편이 시안에 가깝습니다.
      2. rounded-full. 내보낸 config 에서 0.75rem 이었는데 v4 기본값
         (9999px)이 맞으므로 재정의하지 않습니다. 노선 배지가 여기 걸립니다.
 
@@ -85,18 +90,27 @@
   --color-ontime: #28a745;
 
   /* ---------- 타이포 ---------- */
-  --font-headline-xl: "Barlow Condensed", "Noto Sans KR", sans-serif;
-  --font-headline-xl-mobile: "Barlow Condensed", "Noto Sans KR", sans-serif;
-  --font-headline-lg: "Barlow Condensed", "Noto Sans KR", sans-serif;
-  --font-headline-md: "Barlow Condensed", "Noto Sans KR", sans-serif;
-  --font-headline-sm: "Barlow Condensed", "Noto Sans KR", sans-serif;
-  --font-code-time: "Barlow Condensed", "Noto Sans KR", sans-serif;
-  --font-body-lg: "Atkinson Hyperlegible Next", "Noto Sans KR", sans-serif;
-  --font-body-lg-bold: "Atkinson Hyperlegible Next", "Noto Sans KR", sans-serif;
-  --font-body-md: "Atkinson Hyperlegible Next", "Noto Sans KR", sans-serif;
-  --font-body-md-bold: "Atkinson Hyperlegible Next", "Noto Sans KR", sans-serif;
-  --font-label-lg: "Atkinson Hyperlegible Next", "Noto Sans KR", sans-serif;
-  --font-label-md: "Atkinson Hyperlegible Next", "Noto Sans KR", sans-serif;
+
+  /* 한글 스택. 앞의 라틴 폰트에 없는 글자만 여기로 내려옵니다.
+     맑은 고딕은 Windows 기본 탑재 폰트라 내려받지 않고 즉시 그려집니다
+     (라이선스상 웹폰트로 배포할 수 없어 시스템 폰트로만 씁니다).
+     맑은 고딕이 없는 기기를 위해 OS별 기본 한글 폰트를 뒤에 답니다 —
+     macOS·iOS는 Apple SD Gothic Neo, 그 외는 Noto Sans KR. */
+  --font-kr: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo",
+    "Noto Sans KR", sans-serif;
+
+  --font-headline-xl: "Barlow Condensed", var(--font-kr);
+  --font-headline-xl-mobile: "Barlow Condensed", var(--font-kr);
+  --font-headline-lg: "Barlow Condensed", var(--font-kr);
+  --font-headline-md: "Barlow Condensed", var(--font-kr);
+  --font-headline-sm: "Barlow Condensed", var(--font-kr);
+  --font-code-time: "Barlow Condensed", var(--font-kr);
+  --font-body-lg: "Atkinson Hyperlegible Next", var(--font-kr);
+  --font-body-lg-bold: "Atkinson Hyperlegible Next", var(--font-kr);
+  --font-body-md: "Atkinson Hyperlegible Next", var(--font-kr);
+  --font-body-md-bold: "Atkinson Hyperlegible Next", var(--font-kr);
+  --font-label-lg: "Atkinson Hyperlegible Next", var(--font-kr);
+  --font-label-md: "Atkinson Hyperlegible Next", var(--font-kr);
 
   --text-headline-xl: 40px;
   --text-headline-xl--line-height: 44px;

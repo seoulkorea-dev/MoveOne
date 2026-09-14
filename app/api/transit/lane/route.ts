@@ -84,7 +84,12 @@ export async function GET(request: Request) {
       userId: session.uid,
     });
 
-    log.error("loadLane 실패", { code: error.code, status: error.status });
+    log.error("loadLane 실패", {
+      code: error.code,
+      status: error.status,
+      message: error.message,
+      detail: error.detail,
+    });
     done({ code: error.code }, "error");
 
     // 지도는 없어도 되는 것이라, 실패해도 화면은 정차역 좌표로 그립니다.

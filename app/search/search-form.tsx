@@ -72,7 +72,12 @@ export default function SearchForm() {
             setLoading(false);
             return;
           }
-          log.error("경로 검색 실패", { status: response.status, code: data?.error?.code });
+          log.error("경로 검색 실패", {
+            status: response.status,
+            code: data?.error?.code,
+            message: data?.error?.message,
+            detail: data?.error?.detail,
+          });
           router.push(`/error/data?code=${encodeURIComponent(data?.error?.code ?? "unknown")}`);
           return;
         }
