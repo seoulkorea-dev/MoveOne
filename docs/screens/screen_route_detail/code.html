@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html class="light" lang="ko"><head><meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>MoveOne — ROUTE</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&amp;family=Barlow+Condensed:wght@600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">tailwind.config = { darkMode:"class", theme:{ extend:{
+  colors:{"on-tertiary":"#ffffff","on-secondary":"#ffffff","error-container":"#ffdad6","surface-variant":"#e1e2e6","on-error-container":"#93000a","outline-variant":"#c3c6d5","on-background":"#191c1f","background":"#f8f9fd","on-secondary-container":"#f9f7ff","on-error":"#ffffff","primary-fixed":"#dae2ff","surface-container":"#eceef2","surface-tint":"#2c59bc","tertiary":"#660900","inverse-surface":"#2e3134","primary-container":"#0040a3","surface":"#f8f9fd","on-surface-variant":"#434652","on-primary-fixed":"#001848","tertiary-container":"#901100","primary":"#002c74","on-secondary-fixed":"#001849","on-secondary-fixed-variant":"#003fa4","on-tertiary-container":"#ff9b88","surface-bright":"#f8f9fd","surface-dim":"#d8dade","surface-container-high":"#e7e8ec","outline":"#747784","primary-fixed-dim":"#b2c5ff","on-tertiary-fixed":"#3f0300","tertiary-fixed-dim":"#ffb4a6","surface-container-highest":"#e1e2e6","secondary-container":"#0266ff","on-primary-fixed-variant":"#0040a2","inverse-primary":"#b2c5ff","error":"#ba1a1a","on-surface":"#191c1f","secondary-fixed-dim":"#b3c5ff","on-primary-container":"#99b4ff","on-tertiary-fixed-variant":"#8f1100","surface-container-lowest":"#ffffff","surface-container-low":"#f2f3f8","secondary":"#0050cc","on-primary":"#ffffff","secondary-fixed":"#dae1ff","tertiary-fixed":"#ffdad3","inverse-on-surface":"#eff1f5"},
+  borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"9999px"},
+  spacing:{"space-xs":"0.25rem","layout-margin-mobile":"1rem","space-xxs":"0.125rem","space-md":"0.75rem","space-base":"1rem","layout-margin-tablet":"1.5rem","space-lg":"1.25rem","space-2xl":"2rem","layout-gutter":"0.75rem","space-3xl":"3rem","space-xl":"1.5rem","space-sm":"0.5rem","layout-margin-desktop":"2rem"},
+  fontFamily:{"label-md":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"body-lg":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-xl-mobile":["Barlow Condensed","Noto Sans KR","sans-serif"],"code-time":["Barlow Condensed","Noto Sans KR","sans-serif"],"label-lg":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"body-md-bold":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-lg":["Barlow Condensed","Noto Sans KR","sans-serif"],"body-md":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-sm":["Barlow Condensed","Noto Sans KR","sans-serif"],"headline-xl":["Barlow Condensed","Noto Sans KR","sans-serif"],"body-lg-bold":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-md":["Barlow Condensed","Noto Sans KR","sans-serif"]},
+  fontSize:{"label-md":["11px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"700"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-xl-mobile":["32px",{lineHeight:"36px",letterSpacing:"0.02em",fontWeight:"700"}],"code-time":["18px",{lineHeight:"20px",letterSpacing:"0.04em",fontWeight:"700"}],"label-lg":["13px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"700"}],"body-md-bold":["14px",{lineHeight:"20px",fontWeight:"700"}],"headline-lg":["28px",{lineHeight:"32px",letterSpacing:"0.01em",fontWeight:"700"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"22px",letterSpacing:"0.02em",fontWeight:"600"}],"headline-xl":["40px",{lineHeight:"44px",letterSpacing:"0.02em",fontWeight:"700"}],"body-lg-bold":["16px",{lineHeight:"24px",fontWeight:"700"}],"headline-md":["22px",{lineHeight:"26px",letterSpacing:"0.01em",fontWeight:"600"}]}
+} } };</script>
+<style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#f8f9fd;}
+body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}
+.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}
+.pt-safe{padding-top:env(safe-area-inset-top,0px);}
+main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}
+::-webkit-scrollbar{display:none;}.no-scrollbar::-webkit-scrollbar{display:none;}</style>
+<style>body{min-height:max(884px,100dvh);}</style>
+</head><body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="이전 페이지로 이동" class="w-11 h-11 -ml-2 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">ROUTE</h1></div><div class="flex items-center gap-space-xs"><button aria-label="운행 알림" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-space-2xl bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-lg gap-space-lg">
+<!-- 요약 -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-md flex flex-col gap-space-md">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="bg-primary text-on-primary font-label-md text-label-md px-2 py-0.5 rounded-lg tracking-wider">추천 (최단시간)</span>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md px-2 py-0.5 rounded-lg">환승 없음</span></div>
+<span class="font-code-time text-headline-xl-mobile text-secondary leading-none shrink-0">24<span class="text-headline-md font-headline-md">분</span></span></div>
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary truncate">강남역</span>
+<span class="material-symbols-outlined text-outline-variant text-[18px] shrink-0">arrow_forward</span>
+<span class="font-headline-sm text-headline-sm text-primary truncate">판교역</span></div>
+<div class="flex items-center justify-between font-label-lg text-label-lg text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="text-on-surface font-body-md-bold text-body-md-bold">08:32</span><span>출발</span>
+<span class="material-symbols-outlined text-outline-variant text-[14px]">arrow_right_alt</span>
+<span class="text-on-surface font-body-md-bold text-body-md-bold">08:56</span><span>도착</span></div>
+<div class="flex items-center gap-space-sm text-on-surface"><span>2,800원</span>
+<span class="text-outline-variant">·</span><span>도보 5분</span></div></div>
+<div class="w-full h-2.5 rounded-full overflow-hidden flex bg-surface-container-high">
+<div class="h-full bg-outline-variant w-[12%]" title="도보 3분"></div>
+<div class="h-full w-[80%]" style="background-color:#D4003B" title="신분당선 19분"></div>
+<div class="h-full bg-outline-variant w-[8%]" title="도보 2분"></div></div></section>
+
+<!-- 지도 프리뷰 (카카오맵 JS SDK 자리) -->
+<section aria-label="경로 지도 미리보기" class="relative rounded-xl overflow-hidden shadow-sm border border-outline-variant bg-surface-container-low aspect-[16/10]">
+<div class="absolute inset-0 opacity-40" style="background-image:linear-gradient(#c3c6d5 1px,transparent 1px),linear-gradient(90deg,#c3c6d5 1px,transparent 1px);background-size:28px 28px"></div>
+<svg class="absolute inset-0 w-full h-full" viewBox="0 0 320 200" preserveAspectRatio="none" aria-hidden="true">
+<polyline points="48,158 92,140 150,104 208,72 262,48" fill="none" stroke="#D4003B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="30,168 48,158" fill="none" stroke="#747784" stroke-width="4" stroke-dasharray="6 6" stroke-linecap="round"/>
+<polyline points="262,48 284,36" fill="none" stroke="#747784" stroke-width="4" stroke-dasharray="6 6" stroke-linecap="round"/>
+<circle cx="30" cy="168" r="7" fill="#ffffff" stroke="#0266ff" stroke-width="3"/>
+<circle cx="284" cy="36" r="7" fill="#002c74"/></svg>
+<div class="absolute bottom-space-sm right-space-sm w-11 h-11 rounded-lg bg-surface-container-lowest border border-outline-variant shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]">my_location</span></div>
+<span class="absolute top-space-sm left-space-sm font-label-md text-label-md text-on-surface-variant bg-surface-container-lowest/90 px-2 py-1 rounded-lg">지도 미리보기</span></section>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">구간 안내</h2></div>
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<ol class="flex flex-col">
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-2 h-2 rounded-full bg-outline-variant shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-outline text-[18px] shrink-0">directions_walk</span>
+<span class="font-body-md text-body-md text-on-surface truncate">강남역 5번 출구까지 도보</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">출발지에서 190m</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0">3분</span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-3 h-3 rounded-full border-2 border-primary-container bg-surface-container-lowest shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="w-5 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#D4003B">신</span>
+<span class="font-body-md-bold text-body-md-bold text-on-surface truncate">신분당선 강남역 승차</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">판교 방면 · 4개 역</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0">19분</span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-2 h-2 rounded-full bg-outline-variant shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="w-5 shrink-0"></span>
+<span class="font-body-md text-body-md text-on-surface truncate">양재 · 양재시민의숲 · 청계산입구</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">중간 정차역 3개</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0"></span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-3 h-3 rounded-full border-2 border-primary-container bg-surface-container-lowest shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="w-5 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#D4003B">신</span>
+<span class="font-body-md-bold text-body-md-bold text-on-surface truncate">판교역 하차</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">1번 출구 방면</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0"></span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-3 h-3 rounded-full border-2 shrink-0" style="border-color:#D4003B;background-color:#D4003B"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-outline text-[18px] shrink-0">directions_walk</span>
+<span class="font-body-md text-body-md text-on-surface truncate">판교역 1번 출구에서 도보</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">도착지까지 110m</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0">2분</span></div></li>
+</ol></section>
+
+<aside class="bg-surface-container-low rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">info</span>
+<div class="min-w-0 text-on-surface-variant"><p class="font-body-md-bold text-body-md-bold">요금은 성인 교통카드 기준입니다</p>
+<p class="font-body-md text-body-md mt-0.5">환승 할인이 반영된 금액이며, 실제 결제 금액과 다를 수 있습니다.</p></div></aside>
+
+<div class="h-20"></div>
+<!-- 고정 CTA -->
+<div class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/95 backdrop-blur-xl shadow-[0_-2px_12px_rgba(25,28,31,0.08)]">
+<div class="px-layout-margin-mobile py-space-md flex items-center gap-space-sm max-w-lg mx-auto">
+<button aria-label="경로 저장" class="w-12 h-12 rounded-lg border border-outline-variant bg-surface-container-lowest flex items-center justify-center text-on-surface-variant shrink-0" type="button">
+<span class="material-symbols-outlined text-[22px]">bookmark_add</span></button>
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm" type="button"><span>실시간 안내 시작</span>
+<span class="material-symbols-outlined text-[18px]">navigation</span></button></div></div>
+</div></main></body></html>

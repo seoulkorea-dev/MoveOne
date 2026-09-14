@@ -1,0 +1,506 @@
+<!DOCTYPE html><html class="light" lang="ko"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/><title>MoveOne 화면 시안</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&amp;family=Barlow+Condensed:wght@600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">tailwind.config = { darkMode:"class", theme:{ extend:{
+  colors:{"on-tertiary":"#ffffff","on-secondary":"#ffffff","error-container":"#ffdad6","surface-variant":"#e1e2e6","on-error-container":"#93000a","outline-variant":"#c3c6d5","on-background":"#191c1f","background":"#f8f9fd","on-secondary-container":"#f9f7ff","on-error":"#ffffff","primary-fixed":"#dae2ff","surface-container":"#eceef2","surface-tint":"#2c59bc","tertiary":"#660900","inverse-surface":"#2e3134","primary-container":"#0040a3","surface":"#f8f9fd","on-surface-variant":"#434652","on-primary-fixed":"#001848","tertiary-container":"#901100","primary":"#002c74","on-secondary-fixed":"#001849","on-secondary-fixed-variant":"#003fa4","on-tertiary-container":"#ff9b88","surface-bright":"#f8f9fd","surface-dim":"#d8dade","surface-container-high":"#e7e8ec","outline":"#747784","primary-fixed-dim":"#b2c5ff","on-tertiary-fixed":"#3f0300","tertiary-fixed-dim":"#ffb4a6","surface-container-highest":"#e1e2e6","secondary-container":"#0266ff","on-primary-fixed-variant":"#0040a2","inverse-primary":"#b2c5ff","error":"#ba1a1a","on-surface":"#191c1f","secondary-fixed-dim":"#b3c5ff","on-primary-container":"#99b4ff","on-tertiary-fixed-variant":"#8f1100","surface-container-lowest":"#ffffff","surface-container-low":"#f2f3f8","secondary":"#0050cc","on-primary":"#ffffff","secondary-fixed":"#dae1ff","tertiary-fixed":"#ffdad3","inverse-on-surface":"#eff1f5"},
+  borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"9999px"},
+  spacing:{"space-xs":"0.25rem","layout-margin-mobile":"1rem","space-xxs":"0.125rem","space-md":"0.75rem","space-base":"1rem","layout-margin-tablet":"1.5rem","space-lg":"1.25rem","space-2xl":"2rem","layout-gutter":"0.75rem","space-3xl":"3rem","space-xl":"1.5rem","space-sm":"0.5rem","layout-margin-desktop":"2rem"},
+  fontFamily:{"label-md":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"body-lg":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-xl-mobile":["Barlow Condensed","Noto Sans KR","sans-serif"],"code-time":["Barlow Condensed","Noto Sans KR","sans-serif"],"label-lg":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"body-md-bold":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-lg":["Barlow Condensed","Noto Sans KR","sans-serif"],"body-md":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-sm":["Barlow Condensed","Noto Sans KR","sans-serif"],"headline-xl":["Barlow Condensed","Noto Sans KR","sans-serif"],"body-lg-bold":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-md":["Barlow Condensed","Noto Sans KR","sans-serif"]},
+  fontSize:{"label-md":["11px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"700"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-xl-mobile":["32px",{lineHeight:"36px",letterSpacing:"0.02em",fontWeight:"700"}],"code-time":["18px",{lineHeight:"20px",letterSpacing:"0.04em",fontWeight:"700"}],"label-lg":["13px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"700"}],"body-md-bold":["14px",{lineHeight:"20px",fontWeight:"700"}],"headline-lg":["28px",{lineHeight:"32px",letterSpacing:"0.01em",fontWeight:"700"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"22px",letterSpacing:"0.02em",fontWeight:"600"}],"headline-xl":["40px",{lineHeight:"44px",letterSpacing:"0.02em",fontWeight:"700"}],"body-lg-bold":["16px",{lineHeight:"24px",fontWeight:"700"}],"headline-md":["22px",{lineHeight:"26px",letterSpacing:"0.01em",fontWeight:"600"}]}
+} } };</script>
+
+<style>
+:root{
+  --ink:#191c1f; --ink-2:#434652; --ink-3:#747784;
+  --ground:#eef0f6; --panel:#ffffff; --line:#c3c6d5;
+  --navy:#002c74; --blue:#0266ff; --alert:#d9381e;
+  --scale:.62;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --ink:#eff1f5; --ink-2:#c3c6d5; --ink-3:#8b8f9e;
+  --ground:#15171b; --panel:#1d2025; --line:#333843; --navy:#b2c5ff;
+} }
+:root[data-theme="dark"]{
+  --ink:#eff1f5; --ink-2:#c3c6d5; --ink-3:#8b8f9e;
+  --ground:#15171b; --panel:#1d2025; --line:#333843; --navy:#b2c5ff;
+}
+.board{ background:var(--ground); color:var(--ink); margin:0;
+  font-family:"Noto Sans KR","Atkinson Hyperlegible Next",system-ui,sans-serif; min-height:100dvh; }
+.wrap{ max-width:1440px; margin:0 auto; padding-block:40px 72px; padding-left:24px; padding-right:24px; }
+.mast{ display:flex; flex-direction:column; gap:10px; border-bottom:2px solid var(--navy); padding-bottom:20px; margin-bottom:28px; }
+.eyebrow{ font-family:"Atkinson Hyperlegible Next",sans-serif; font-size:11px; font-weight:700;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); }
+.mast h1{ font-family:"Barlow Condensed","Noto Sans KR",sans-serif; font-size:clamp(30px,5vw,46px);
+  font-weight:700; letter-spacing:.01em; margin:0; color:var(--navy); text-wrap:balance; }
+.mast p{ margin:0; max-width:62ch; font-size:14px; line-height:1.65; color:var(--ink-2); }
+.notes{ display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); margin-bottom:32px; }
+.note{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+.note b{ display:block; font-size:12px; letter-spacing:.02em; margin-bottom:4px; color:var(--ink); }
+.note span{ font-size:13px; line-height:1.6; color:var(--ink-2); }
+.note.warn{ border-left:4px solid var(--alert); }
+.grid{ display:grid; gap:36px 28px; grid-template-columns:repeat(auto-fill,minmax(252px,1fr)); align-items:start; }
+figure{ margin:0; display:flex; flex-direction:column; gap:12px; }
+.phone{ position:relative; overflow:hidden; background:#f8f9fd;
+  width:calc(390px * var(--scale)); height:calc(844px * var(--scale));
+  border:1px solid var(--line); border-radius:14px; box-shadow:0 6px 20px rgba(25,28,31,.10); }
+.phone > div{ transform:scale(var(--scale)); transform-origin:top left; }
+figcaption{ display:flex; flex-direction:column; gap:5px; max-width:calc(390px * var(--scale)); }
+.cap-top{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+.cap-top strong{ font-family:"Barlow Condensed","Noto Sans KR",sans-serif; font-size:19px; font-weight:700; color:var(--ink); }
+.route{ font-family:"Atkinson Hyperlegible Next",monospace; font-size:11px; color:var(--ink-3); }
+.tags{ display:flex; gap:5px; flex-wrap:wrap; }
+.tag{ font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:2px 7px; border-radius:3px; background:var(--navy); color:#fff; }
+.tag.b{ background:transparent; color:var(--ink-2); border:1px solid var(--line); }
+figcaption p{ margin:0; font-size:12.5px; line-height:1.55; color:var(--ink-2); }
+@media (max-width:520px){ :root{ --scale:.78; } .grid{ grid-template-columns:1fr; justify-items:center; } }
+</style>
+</head><body class="board"><div class="wrap">
+<div class="mast">
+<span class="eyebrow">MoveOne · Municipal Wayfinding</span>
+<h1>1차 범위 화면 시안 8종</h1>
+<p>Stitch가 내보낸 <b>SearchResult</b>의 tailwind.config를 그대로 토큰으로 삼아, 시안이 없던 8개 화면을 같은 언어로 그렸습니다.
+390&times;844 모바일 기준이고, 실제 크기의 62%로 축소해 보여줍니다.</p>
+</div>
+
+<div class="notes">
+<div class="note"><b>토큰 출처</b><span>색·타이포·간격은 <code>screen_searchresult/code.html</code>의 tailwind.config 값입니다. DESIGN.md 본문과 어제 JSON은 값이 서로 달라 참고만 했습니다.</span></div>
+<div class="note"><b>한글 폰트 폴백 추가</b><span>Barlow Condensed와 Atkinson Hyperlegible Next는 한글이 없습니다. 숫자·영문은 원본 폰트, 한글은 Noto Sans KR로 떨어지게 스택을 지정했습니다.</span></div>
+<div class="note"><b>rounded-full 수정</b><span>내보낸 config의 <code>full</code>이 0.75rem(12px)이라 노선 배지가 원형이 되지 않았습니다. 9999px로 고쳤습니다.</span></div>
+<div class="note warn"><b>ODsay가 주지 않는 데이터</b><span>실시간 반영·도착 정보·지연·좌석 여유는 시안 그대로 두었습니다. 구현 시 더미 데이터임을 표시하거나 2차로 미뤄야 합니다.</span></div>
+</div>
+
+<div class="grid">
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[20px]">directions_transit</span></div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">SIGN IN</h1></div><div class="w-11"></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-space-2xl bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-lg gap-space-lg">
+<div class="flex flex-col gap-space-xs pt-space-sm"><h2 class="font-headline-lg text-headline-lg text-primary">다시 오신 것을 환영합니다</h2><p class="font-body-md text-body-md text-on-surface-variant">저장된 경로와 이동 조건을 이어서 사용하세요.</p></div>
+
+<!-- 상태 예시: 5회 실패 잠금. 정상 진입 시에는 렌더하지 않습니다. -->
+<aside class="bg-error-container rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-error text-[20px] shrink-0 mt-0.5">lock</span>
+<div class="min-w-0 text-on-error-container"><p class="font-body-md-bold text-body-md-bold">계정이 잠겼습니다</p>
+<p class="font-body-md text-body-md mt-0.5">비밀번호를 5회 잘못 입력했습니다. 시간이 지나도 자동으로 풀리지 않으며, 비밀번호를 재설정해야 로그인할 수 있습니다.</p><a class="font-label-lg text-label-lg underline underline-offset-2 shrink-0 mt-1 inline-block" href="#">비밀번호 재설정하기</a></div></aside>
+
+<form class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="username">아이디</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="username" name="username" placeholder="아이디를 입력하세요" type="text" autocomplete="username"/></div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="password">비밀번호</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="password" name="password" placeholder="비밀번호를 입력하세요" type="password" autocomplete="current-password"/></div>
+<div class="flex items-center justify-between pt-space-xs">
+<label class="flex items-center gap-space-sm font-body-md text-body-md text-on-surface-variant min-h-[44px]" for="remember">
+<input class="w-5 h-5 rounded-lg border-[1.5px] border-outline-variant accent-[#0266ff]" id="remember" type="checkbox"/>
+<span>로그인 상태 유지</span></label>
+<a class="font-label-lg text-label-lg text-secondary min-h-[44px] flex items-center" href="#">비밀번호 찾기</a>
+</div>
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm" type="submit"><span>로그인</span>
+<span class="material-symbols-outlined text-[18px]">login</span></button>
+</form>
+
+<div class="flex items-center gap-space-md py-space-xs">
+<span class="h-px flex-1 bg-outline-variant"></span>
+<span class="font-label-md text-label-md text-outline tracking-normal">아직 계정이 없으신가요?</span>
+<span class="h-px flex-1 bg-outline-variant"></span></div>
+
+<a class="w-full h-12 bg-surface-container-lowest border border-secondary-container text-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-primary-fixed/40 active:scale-[0.99] transition-all" href="#"><span>회원가입</span></a>
+</div></main></div></div>
+<figcaption><div class="cap-top"><strong>로그인</strong><span class="route">/login</span></div>
+<div class="tags"><span class="tag">인증</span><span class="tag b">1차 범위</span></div>
+<p>5회 실패 잠금 배너를 상태 예시로 포함</p></figcaption></figure>
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="이전 페이지로 이동" class="w-11 h-11 -ml-2 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">SIGN UP</h1></div><div class="w-11"></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-space-2xl bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-lg gap-space-lg">
+<div class="flex flex-col gap-space-xs pt-space-sm"><h2 class="font-headline-lg text-headline-lg text-primary">회원가입</h2><p class="font-body-md text-body-md text-on-surface-variant">비밀번호 재설정에 사용하므로 이메일은 필수입니다.</p></div>
+
+<form class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="email">이메일</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="email" name="email" placeholder="name@example.com" type="email" autocomplete="email" aria-describedby="email-hint"/><p class="font-label-md text-label-md text-on-surface-variant tracking-normal" id="email-hint">비밀번호를 잊었을 때 재설정 링크를 이 주소로 보냅니다.</p></div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="username">아이디</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="username" name="username" placeholder="영문·숫자 4~20자" type="text" autocomplete="username"/></div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="password">비밀번호</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="password" name="password" placeholder="8자 이상" type="password" autocomplete="new-password" aria-describedby="password-hint"/><p class="font-label-md text-label-md text-on-surface-variant tracking-normal" id="password-hint">8자 이상, 영문·숫자·기호 중 두 종류 이상을 섞어주세요.</p></div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="password2">비밀번호 확인</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="password2" name="password2" placeholder="다시 한 번 입력하세요" type="password" autocomplete="new-password"/></div>
+
+<label class="flex items-start gap-space-sm font-body-md text-body-md text-on-surface-variant py-space-xs min-h-[44px]" for="agree">
+<input class="w-5 h-5 mt-0.5 shrink-0 rounded-lg border-[1.5px] border-outline-variant accent-[#0266ff]" id="agree" type="checkbox"/>
+<span>서비스 이용약관과 개인정보 처리방침에 동의합니다.
+<a class="text-secondary underline underline-offset-2" href="#">전문 보기</a></span></label>
+
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm" type="submit"><span>가입하기</span></button>
+</form>
+
+<p class="text-center font-body-md text-body-md text-on-surface-variant">
+이미 계정이 있으신가요? <a class="text-secondary font-body-md-bold text-body-md-bold" href="#">로그인</a></p>
+</div></main></div></div>
+<figcaption><div class="cap-top"><strong>회원가입</strong><span class="route">/register</span></div>
+<div class="tags"><span class="tag">인증</span><span class="tag b">1차 범위</span></div>
+<p>이메일 필수 — 비밀번호 재설정에 사용</p></figcaption></figure>
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="이전 페이지로 이동" class="w-11 h-11 -ml-2 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">RESET</h1></div><div class="w-11"></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-space-2xl bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-lg gap-space-lg">
+<div class="flex flex-col gap-space-xs pt-space-sm"><h2 class="font-headline-lg text-headline-lg text-primary">비밀번호 재설정</h2><p class="font-body-md text-body-md text-on-surface-variant">가입할 때 등록한 이메일 주소를 입력하세요.</p></div>
+
+<form class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="email">이메일</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="email" name="email" placeholder="name@example.com" type="email" autocomplete="email"/></div>
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm" type="submit"><span>재설정 링크 보내기</span>
+<span class="material-symbols-outlined text-[18px]">mail</span></button>
+</form>
+
+<!-- 계정 열거 방지: 등록 여부와 관계없이 아래 화면이 동일하게 나타납니다. -->
+<aside class="bg-primary-fixed rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">mark_email_read</span>
+<div class="min-w-0 text-on-primary-fixed"><p class="font-body-md-bold text-body-md-bold">메일을 보냈습니다</p>
+<p class="font-body-md text-body-md mt-0.5">해당 주소로 가입된 계정이 있다면 재설정 링크를 보냈습니다. 링크는 30분 동안, 한 번만 사용할 수 있습니다.</p></div></aside>
+
+<aside class="bg-surface-container-low rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">info</span>
+<div class="min-w-0 text-on-surface-variant"><p class="font-body-md-bold text-body-md-bold">메일이 오지 않나요?</p>
+<p class="font-body-md text-body-md mt-0.5">스팸함을 확인해 주세요. 그래도 없으면 다른 주소로 가입했을 수 있습니다.</p></div></aside>
+
+<a class="w-full h-12 bg-surface-container-lowest border border-secondary-container text-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-primary-fixed/40 active:scale-[0.99] transition-all" href="#"><span>로그인으로 돌아가기</span></a>
+</div></main></div></div>
+<figcaption><div class="cap-top"><strong>비밀번호 찾기</strong><span class="route">/reset</span></div>
+<div class="tags"><span class="tag">인증</span><span class="tag b">1차 범위</span></div>
+<p>계정 열거 방지: 등록 여부와 무관하게 같은 화면</p></figcaption></figure>
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[20px]">directions_transit</span></div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">NEW PASSWORD</h1></div><div class="w-11"></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-space-2xl bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-lg gap-space-lg">
+<div class="flex flex-col gap-space-xs pt-space-sm"><h2 class="font-headline-lg text-headline-lg text-primary">새 비밀번호 설정</h2><p class="font-body-md text-body-md text-on-surface-variant">변경하면 기존에 로그인된 모든 기기에서 로그아웃됩니다.</p></div>
+
+<!-- 상태 예시: 토큰 만료 또는 재사용. 정상 진입 시에는 렌더하지 않습니다. -->
+<aside class="bg-error-container rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-error text-[20px] shrink-0 mt-0.5">link_off</span>
+<div class="min-w-0 text-on-error-container"><p class="font-body-md-bold text-body-md-bold">링크가 만료되었습니다</p>
+<p class="font-body-md text-body-md mt-0.5">재설정 링크는 30분 동안 한 번만 사용할 수 있습니다. 처음부터 다시 요청해 주세요.</p><a class="font-label-lg text-label-lg underline underline-offset-2 shrink-0 mt-1 inline-block" href="#">재설정 링크 다시 받기</a></div></aside>
+
+<form class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="password">새 비밀번호</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="password" name="password" placeholder="8자 이상" type="password" autocomplete="new-password" aria-describedby="password-hint"/><p class="font-label-md text-label-md text-on-surface-variant tracking-normal" id="password-hint">8자 이상, 영문·숫자·기호 중 두 종류 이상을 섞어주세요.</p></div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-lg text-label-lg text-on-surface-variant tracking-normal" for="password2">새 비밀번호 확인</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="password2" name="password2" placeholder="다시 한 번 입력하세요" type="password" autocomplete="new-password"/></div>
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm" type="submit"><span>비밀번호 변경</span></button>
+</form>
+
+<aside class="bg-surface-container-low rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">lock_open</span>
+<div class="min-w-0 text-on-surface-variant"><p class="font-body-md-bold text-body-md-bold">계정 잠금도 함께 해제됩니다</p>
+<p class="font-body-md text-body-md mt-0.5">로그인 5회 실패로 잠긴 계정은 비밀번호를 재설정하면 다시 사용할 수 있습니다.</p></div></aside>
+</div></main></div></div>
+<figcaption><div class="cap-top"><strong>비밀번호 재설정</strong><span class="route">/reset/confirm</span></div>
+<div class="tags"><span class="tag">인증</span><span class="tag b">1차 범위</span></div>
+<p>토큰 만료(30분·1회용) 배너 포함</p></figcaption></figure>
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[20px]">directions_transit</span></div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">MOVEONE</h1></div><div class="flex items-center gap-space-xs"><button aria-label="운행 알림" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))] bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-base gap-space-md">
+<!-- 검색 진입 -->
+<a class="bg-surface-container-lowest rounded-xl p-space-base shadow-md flex items-center gap-space-sm min-h-[44px]" href="#">
+<span class="material-symbols-outlined text-secondary text-[22px]">search</span>
+<span class="font-body-lg text-body-lg text-outline flex-1">어디로 가시나요?</span>
+<span class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">my_location</span></span></a>
+
+<!-- 퀵 메뉴 4컬럼 -->
+<div class="grid grid-cols-4 gap-space-sm">
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">work</span><span class="font-body-md-bold text-body-md-bold text-on-surface">출근길</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">집 → 회사</span></a>
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">home</span><span class="font-body-md-bold text-body-md-bold text-on-surface">퇴근길</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">회사 → 집</span></a>
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">bookmark</span><span class="font-body-md-bold text-body-md-bold text-on-surface">즐겨찾기</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">3개</span></a>
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">history</span><span class="font-body-md-bold text-body-md-bold text-on-surface">최근</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">5개</span></a>
+</div>
+
+<!-- 실시간 운행 알림 -->
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex items-start gap-space-sm border-l-4" style="border-left-color:#D9381E">
+<span class="material-symbols-outlined text-[22px] shrink-0 mt-0.5" style="color:#D9381E">warning</span>
+<div class="min-w-0 flex flex-col gap-space-xxs">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">2호선 지연</span>
+<span class="font-label-md text-label-md text-white px-2 py-0.5 rounded-lg" style="background-color:#D9381E">평균 7분</span></div>
+<p class="font-body-md text-body-md text-on-surface-variant">신도림~사당 구간 신호 장애로 지연 중입니다. 대체 경로를 확인하세요.</p>
+<a class="font-label-lg text-label-lg text-secondary mt-1" href="#">대체 경로 보기</a></div></article>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">자주 찾는 경로</h2><a class="font-label-lg text-label-lg text-secondary min-h-[44px] flex items-center" href="#">전체보기<span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span></a></div>
+
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">work</span>
+<span class="font-headline-sm text-headline-sm text-primary">집 → 회사</span></div>
+<span class="font-code-time text-headline-md text-secondary leading-none">42<span class="text-body-md-bold font-body-md-bold">분</span></span></div>
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#00A84D">2</span><span class="font-body-md text-body-md text-on-surface-variant">강남 → 사당</span>
+<span class="material-symbols-outlined text-outline-variant text-[14px]">arrow_right_alt</span>
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#00A5DE">4</span><span class="font-body-md text-body-md text-on-surface-variant">사당 → 명동</span></div>
+<div class="flex items-center justify-between font-label-lg text-label-lg text-on-surface-variant">
+<span>다음 열차 <span class="text-secondary font-bold">4분 후</span></span><span>환승 1회 · 1,600원</span></div></article>
+
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">school</span>
+<span class="font-headline-sm text-headline-sm text-primary">집 → 판교</span></div>
+<span class="font-code-time text-headline-md text-secondary leading-none">24<span class="text-body-md-bold font-body-md-bold">분</span></span></div>
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#D4003B">신</span><span class="font-body-md text-body-md text-on-surface-variant">강남 → 판교</span></div>
+<div class="flex items-center justify-between font-label-lg text-label-lg text-on-surface-variant">
+<span>다음 열차 <span class="text-secondary font-bold">2분 후</span></span><span>환승 0회 · 2,800원</span></div></article>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">최근 이용 정류장</h2></div>
+
+<section class="bg-surface-container-lowest rounded-xl divide-y divide-outline-variant/60 shadow-sm overflow-hidden">
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]">
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#00A84D">2</span>
+<div class="flex-1 min-w-0"><p class="font-body-md-bold text-body-md-bold text-on-surface truncate">강남역</p>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal">외선순환 · 성수 방면</p></div>
+<span class="font-code-time text-code-time text-secondary shrink-0">2분</span></div>
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]">
+<span class="w-10 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#0068B7">146</span>
+<div class="flex-1 min-w-0"><p class="font-body-md-bold text-body-md-bold text-on-surface truncate">강남역.강남지하상가</p>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal">상계 방면 · 2정거장 전</p></div>
+<span class="font-code-time text-code-time shrink-0" style="color:#D9381E">지연</span></div>
+</section>
+</div></main><nav class="absolute bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(25,28,31,0.06)]"><div class="h-[60px] px-layout-margin-mobile grid grid-cols-4 items-center justify-items-center max-w-lg mx-auto"><a aria-current="page" class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs transition-colors focus:outline-none text-secondary" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">directions_subway</span><span class="font-label-md text-label-md tracking-wider uppercase">Home</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-md text-label-md tracking-wider uppercase">Search</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="saved" href="#"><span class="material-symbols-outlined text-[24px]">bookmark</span><span class="font-label-md text-label-md tracking-wider uppercase">Saved</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-md text-label-md tracking-wider uppercase">Settings</span></a></div></nav></div></div>
+<figcaption><div class="cap-top"><strong>메인 대시보드</strong><span class="route">/</span></div>
+<div class="tags"><span class="tag">경로 검색</span><span class="tag b">1차 범위</span></div>
+<p>지연 알림·도착 정보는 ODsay 미제공 항목</p></figcaption></figure>
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="이전 페이지로 이동" class="w-11 h-11 -ml-2 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">SEARCH</h1></div><div class="flex items-center gap-space-xs"><button aria-label="운행 알림" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))] bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-base gap-space-md">
+<!-- 출발 / 도착 -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-md flex items-center gap-space-sm">
+<div class="flex flex-col items-center gap-1 pt-3 shrink-0">
+<span class="w-2.5 h-2.5 rounded-full border-2 border-secondary-container"></span>
+<span class="w-px h-6 bg-outline-variant"></span>
+<span class="material-symbols-outlined text-primary text-[16px]">location_on</span></div>
+<div class="flex-1 min-w-0 flex flex-col gap-space-sm">
+<label class="sr-only" for="origin">출발지</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="origin" placeholder="출발지 입력" value="강남역"/>
+<label class="sr-only" for="dest">도착지</label>
+<input class="h-12 w-full rounded-lg bg-surface-container-lowest border-[1.5px] border-outline-variant px-space-md font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary-container focus:ring-2 focus:ring-secondary-container/40 transition-all" id="dest" placeholder="도착지 입력"/></div>
+<button aria-label="출발지와 도착지 반전" class="w-11 h-11 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-secondary transition-colors shrink-0" type="button">
+<span class="material-symbols-outlined text-[20px]">swap_vert</span></button></section>
+
+<!-- 출발 시간 -->
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5">
+<button class="shrink-0 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm flex items-center gap-1.5 transition-all min-h-[36px]" type="button">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings:'FILL' 1;">schedule</span>
+<span>지금 출발</span></button>
+<button class="shrink-0 px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-lg text-label-lg shadow-sm transition-all min-h-[36px]" type="button">출발 시각 지정</button>
+<button class="shrink-0 px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-lg text-label-lg shadow-sm transition-all min-h-[36px]" type="button">도착 시각 지정</button></div>
+
+<!-- 교통수단 필터 -->
+<section aria-label="교통수단 필터" class="flex flex-col gap-space-sm">
+<h2 class="font-label-lg text-label-lg text-on-surface-variant tracking-normal">교통수단</h2>
+<div class="flex items-center gap-space-xs flex-wrap">
+<button aria-pressed="true" class="shrink-0 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm flex items-center gap-1.5 transition-all min-h-[36px]" type="button">
+<span class="material-symbols-outlined text-[16px]">subway</span><span>지하철</span></button>
+<button aria-pressed="true" class="shrink-0 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm flex items-center gap-1.5 transition-all min-h-[36px]" type="button">
+<span class="material-symbols-outlined text-[16px]">directions_bus</span><span>버스</span></button>
+<button aria-pressed="false" class="shrink-0 px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-lg text-label-lg shadow-sm transition-all min-h-[36px]" type="button">최소 도보</button>
+<button aria-pressed="false" class="shrink-0 px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-lg text-label-lg shadow-sm transition-all min-h-[36px]" type="button">계단 없는 경로</button></div></section>
+
+<aside class="bg-surface-container-low rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">map</span>
+<div class="min-w-0 text-on-surface-variant"><p class="font-body-md-bold text-body-md-bold">수도권만 검색됩니다</p>
+<p class="font-body-md text-body-md mt-0.5">1차 서비스 지역은 서울·경기·인천입니다. 그 밖의 출발·도착지는 검색 전에 안내합니다.</p></div></aside>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">자주 찾는 장소</h2><a class="font-label-lg text-label-lg text-secondary min-h-[44px] flex items-center" href="#">편집<span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span></a></div>
+<div class="grid grid-cols-2 gap-space-sm">
+<a class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-center gap-space-sm min-h-[44px]" href="#">
+<span class="w-9 h-9 rounded-lg bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[18px]">home</span></span>
+<div class="min-w-0"><p class="font-body-md-bold text-body-md-bold text-on-surface">집</p>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal truncate">서초구 서초동</p></div></a>
+<a class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-center gap-space-sm min-h-[44px]" href="#">
+<span class="w-9 h-9 rounded-lg bg-primary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary text-[18px]">work</span></span>
+<div class="min-w-0"><p class="font-body-md-bold text-body-md-bold text-on-surface">회사</p>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal truncate">성남시 분당구</p></div></a></div>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">최근 검색</h2><a class="font-label-lg text-label-lg text-secondary min-h-[44px] flex items-center" href="#">전체 삭제<span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span></a></div>
+<section class="bg-surface-container-lowest rounded-xl divide-y divide-outline-variant/60 shadow-sm overflow-hidden">
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]">
+<span class="material-symbols-outlined text-outline text-[18px] shrink-0">history</span>
+<div class="flex-1 min-w-0 flex items-center gap-space-xs">
+<span class="font-body-md text-body-md text-on-surface truncate">강남역</span>
+<span class="material-symbols-outlined text-outline-variant text-[14px]">arrow_right_alt</span>
+<span class="font-body-md text-body-md text-on-surface truncate">판교역</span></div>
+<button aria-label="최근 검색 삭제" class="w-11 h-11 -mr-2 flex items-center justify-center text-outline hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span></button></div>
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]">
+<span class="material-symbols-outlined text-outline text-[18px] shrink-0">history</span>
+<div class="flex-1 min-w-0 flex items-center gap-space-xs">
+<span class="font-body-md text-body-md text-on-surface truncate">서울역</span>
+<span class="material-symbols-outlined text-outline-variant text-[14px]">arrow_right_alt</span>
+<span class="font-body-md text-body-md text-on-surface truncate">인천공항T2</span></div>
+<button aria-label="최근 검색 삭제" class="w-11 h-11 -mr-2 flex items-center justify-center text-outline hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span></button></div>
+</section>
+
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm mt-space-xs" type="button"><span>경로 검색</span>
+<span class="material-symbols-outlined text-[18px]">search</span></button>
+</div></main><nav class="absolute bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(25,28,31,0.06)]"><div class="h-[60px] px-layout-margin-mobile grid grid-cols-4 items-center justify-items-center max-w-lg mx-auto"><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">directions_subway</span><span class="font-label-md text-label-md tracking-wider uppercase">Home</span></a><a aria-current="page" class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs transition-colors focus:outline-none text-secondary" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-md text-label-md tracking-wider uppercase">Search</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="saved" href="#"><span class="material-symbols-outlined text-[24px]">bookmark</span><span class="font-label-md text-label-md tracking-wider uppercase">Saved</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-md text-label-md tracking-wider uppercase">Settings</span></a></div></nav></div></div>
+<figcaption><div class="cap-top"><strong>경로 검색 입력</strong><span class="route">/search</span></div>
+<div class="tags"><span class="tag">경로 검색</span><span class="tag b">1차 범위</span></div>
+<p>수도권 밖은 검색 전에 안내</p></figcaption></figure>
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="이전 페이지로 이동" class="w-11 h-11 -ml-2 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">ROUTE</h1></div><div class="flex items-center gap-space-xs"><button aria-label="운행 알림" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-space-2xl bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-lg gap-space-lg">
+<!-- 요약 -->
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-md flex flex-col gap-space-md">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="bg-primary text-on-primary font-label-md text-label-md px-2 py-0.5 rounded-lg tracking-wider">추천 (최단시간)</span>
+<span class="bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md px-2 py-0.5 rounded-lg">환승 없음</span></div>
+<span class="font-code-time text-headline-xl-mobile text-secondary leading-none shrink-0">24<span class="text-headline-md font-headline-md">분</span></span></div>
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary truncate">강남역</span>
+<span class="material-symbols-outlined text-outline-variant text-[18px] shrink-0">arrow_forward</span>
+<span class="font-headline-sm text-headline-sm text-primary truncate">판교역</span></div>
+<div class="flex items-center justify-between font-label-lg text-label-lg text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="text-on-surface font-body-md-bold text-body-md-bold">08:32</span><span>출발</span>
+<span class="material-symbols-outlined text-outline-variant text-[14px]">arrow_right_alt</span>
+<span class="text-on-surface font-body-md-bold text-body-md-bold">08:56</span><span>도착</span></div>
+<div class="flex items-center gap-space-sm text-on-surface"><span>2,800원</span>
+<span class="text-outline-variant">·</span><span>도보 5분</span></div></div>
+<div class="w-full h-2.5 rounded-full overflow-hidden flex bg-surface-container-high">
+<div class="h-full bg-outline-variant w-[12%]" title="도보 3분"></div>
+<div class="h-full w-[80%]" style="background-color:#D4003B" title="신분당선 19분"></div>
+<div class="h-full bg-outline-variant w-[8%]" title="도보 2분"></div></div></section>
+
+<!-- 지도 프리뷰 (카카오맵 JS SDK 자리) -->
+<section aria-label="경로 지도 미리보기" class="relative rounded-xl overflow-hidden shadow-sm border border-outline-variant bg-surface-container-low aspect-[16/10]">
+<div class="absolute inset-0 opacity-40" style="background-image:linear-gradient(#c3c6d5 1px,transparent 1px),linear-gradient(90deg,#c3c6d5 1px,transparent 1px);background-size:28px 28px"></div>
+<svg class="absolute inset-0 w-full h-full" viewBox="0 0 320 200" preserveAspectRatio="none" aria-hidden="true">
+<polyline points="48,158 92,140 150,104 208,72 262,48" fill="none" stroke="#D4003B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="30,168 48,158" fill="none" stroke="#747784" stroke-width="4" stroke-dasharray="6 6" stroke-linecap="round"/>
+<polyline points="262,48 284,36" fill="none" stroke="#747784" stroke-width="4" stroke-dasharray="6 6" stroke-linecap="round"/>
+<circle cx="30" cy="168" r="7" fill="#ffffff" stroke="#0266ff" stroke-width="3"/>
+<circle cx="284" cy="36" r="7" fill="#002c74"/></svg>
+<div class="absolute bottom-space-sm right-space-sm w-11 h-11 rounded-lg bg-surface-container-lowest border border-outline-variant shadow-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]">my_location</span></div>
+<span class="absolute top-space-sm left-space-sm font-label-md text-label-md text-on-surface-variant bg-surface-container-lowest/90 px-2 py-1 rounded-lg">지도 미리보기</span></section>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">구간 안내</h2></div>
+<section class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm">
+<ol class="flex flex-col">
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-2 h-2 rounded-full bg-outline-variant shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-outline text-[18px] shrink-0">directions_walk</span>
+<span class="font-body-md text-body-md text-on-surface truncate">강남역 5번 출구까지 도보</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">출발지에서 190m</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0">3분</span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-3 h-3 rounded-full border-2 border-primary-container bg-surface-container-lowest shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="w-5 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#D4003B">신</span>
+<span class="font-body-md-bold text-body-md-bold text-on-surface truncate">신분당선 강남역 승차</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">판교 방면 · 4개 역</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0">19분</span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-2 h-2 rounded-full bg-outline-variant shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="w-5 shrink-0"></span>
+<span class="font-body-md text-body-md text-on-surface truncate">양재 · 양재시민의숲 · 청계산입구</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">중간 정차역 3개</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0"></span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-3 h-3 rounded-full border-2 border-primary-container bg-surface-container-lowest shrink-0"></span><span class="w-0.5 flex-1 bg-outline-variant min-h-[28px]"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="w-5 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#D4003B">신</span>
+<span class="font-body-md-bold text-body-md-bold text-on-surface truncate">판교역 하차</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">1번 출구 방면</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0"></span></div></li>
+<li class="flex gap-space-md">
+<div class="flex flex-col items-center pt-1.5 shrink-0"><span class="w-3 h-3 rounded-full border-2 shrink-0" style="border-color:#D4003B;background-color:#D4003B"></span></div>
+<div class="flex-1 min-w-0 pb-space-md flex items-start gap-space-sm">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-outline text-[18px] shrink-0">directions_walk</span>
+<span class="font-body-md text-body-md text-on-surface truncate">판교역 1번 출구에서 도보</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">도착지까지 110m</p></div>
+<span class="font-label-lg text-label-lg text-on-surface-variant shrink-0">2분</span></div></li>
+</ol></section>
+
+<aside class="bg-surface-container-low rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">info</span>
+<div class="min-w-0 text-on-surface-variant"><p class="font-body-md-bold text-body-md-bold">요금은 성인 교통카드 기준입니다</p>
+<p class="font-body-md text-body-md mt-0.5">환승 할인이 반영된 금액이며, 실제 결제 금액과 다를 수 있습니다.</p></div></aside>
+
+<div class="h-20"></div>
+<!-- 고정 CTA -->
+<div class="absolute bottom-0 inset-x-0 z-50 pb-safe bg-surface/95 backdrop-blur-xl shadow-[0_-2px_12px_rgba(25,28,31,0.08)]">
+<div class="px-layout-margin-mobile py-space-md flex items-center gap-space-sm max-w-lg mx-auto">
+<button aria-label="경로 저장" class="w-12 h-12 rounded-lg border border-outline-variant bg-surface-container-lowest flex items-center justify-center text-on-surface-variant shrink-0" type="button">
+<span class="material-symbols-outlined text-[22px]">bookmark_add</span></button>
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm" type="button"><span>실시간 안내 시작</span>
+<span class="material-symbols-outlined text-[18px]">navigation</span></button></div></div>
+</div></main></div></div>
+<figcaption><div class="cap-top"><strong>경로 상세</strong><span class="route">/route/detail</span></div>
+<div class="tags"><span class="tag">경로 검색</span><span class="tag b">1차 범위</span></div>
+<p>지도 영역은 카카오맵 JS SDK 자리</p></figcaption></figure>
+<figure>
+<div class="phone"><div class="bg-surface text-on-surface font-body-md min-h-[844px] flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed" style="width:390px;min-height:844px"><header class="absolute top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="이전 페이지로 이동" class="w-11 h-11 -ml-2 rounded-lg flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">ERROR</h1></div><div class="flex items-center gap-space-xs"><button aria-label="운행 알림" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))] bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-base gap-space-md">
+<section class="bg-surface-container-lowest rounded-xl p-space-lg shadow-md flex flex-col items-center text-center gap-space-md">
+<div class="w-16 h-16 rounded-full bg-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-error text-[32px]">cloud_off</span></div>
+<div class="flex flex-col gap-space-xs">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">경로 정보를 불러오지 못했습니다</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+교통 데이터 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.</p></div>
+<span class="font-label-md text-label-md text-on-surface-variant bg-surface-container-low px-space-md py-1.5 rounded-lg tracking-normal">
+진단 코드 <span class="text-on-surface font-bold">ODS-504</span> · 08:31:22 KST</span>
+<div class="flex flex-col gap-space-sm w-full pt-space-xs">
+<button class="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm" type="button"><span>다시 시도</span>
+<span class="material-symbols-outlined text-[18px]">refresh</span></button>
+<a class="w-full h-12 bg-surface-container-lowest border border-secondary-container text-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-primary-fixed/40 active:scale-[0.99] transition-all" href="#"><span>홈으로 이동</span></a></div></section>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">시스템 진단</h2></div>
+<section class="bg-surface-container-lowest rounded-xl divide-y divide-outline-variant/60 shadow-sm overflow-hidden">
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]"><span class="w-2 h-2 rounded-full shrink-0" style="background-color:#D9381E"></span><span class="font-body-md text-body-md text-on-surface flex-1 min-w-0 truncate">경로 데이터 (ODsay)</span><span class="font-label-lg text-label-lg shrink-0" style="color:#D9381E">응답 지연</span></div>
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]"><span class="w-2 h-2 rounded-full shrink-0" style="background-color:#28A745"></span><span class="font-body-md text-body-md text-on-surface flex-1 min-w-0 truncate">장소 검색 (카카오)</span><span class="font-label-lg text-label-lg shrink-0" style="color:#28A745">정상</span></div>
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]"><span class="w-2 h-2 rounded-full shrink-0" style="background-color:#28A745"></span><span class="font-body-md text-body-md text-on-surface flex-1 min-w-0 truncate">네트워크 연결</span><span class="font-label-lg text-label-lg shrink-0" style="color:#28A745">정상</span></div>
+</section>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">저장된 이전 경로</h2></div>
+<aside class="bg-surface-container-low rounded-xl px-space-base py-space-md flex items-start gap-space-sm" role="status">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">cached</span>
+<div class="min-w-0 text-on-surface-variant"><p class="font-body-md-bold text-body-md-bold">마지막으로 받은 결과입니다</p>
+<p class="font-body-md text-body-md mt-0.5">08:19에 저장된 경로라 지금 상황과 다를 수 있습니다.</p></div></aside>
+<section class="flex flex-col gap-space-sm">
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex items-center gap-space-sm opacity-90">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs">
+<span class="font-body-md-bold text-body-md-bold text-on-surface truncate">강남역 → 판교역</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">신분당선 · 환승 0회 · 2,800원</p></div>
+<span class="font-code-time text-code-time text-on-surface-variant shrink-0">24분</span>
+<span class="material-symbols-outlined text-outline text-[18px] shrink-0">chevron_right</span></article>
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex items-center gap-space-sm opacity-90">
+<div class="flex-1 min-w-0"><div class="flex items-center gap-space-xs">
+<span class="font-body-md-bold text-body-md-bold text-on-surface truncate">강남역 → 판교역</span></div>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">광역 9408 · 환승 0회 · 2,800원</p></div>
+<span class="font-code-time text-code-time text-on-surface-variant shrink-0">38분</span>
+<span class="material-symbols-outlined text-outline text-[18px] shrink-0">chevron_right</span></article>
+</section>
+</div></main><nav class="absolute bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(25,28,31,0.06)]"><div class="h-[60px] px-layout-margin-mobile grid grid-cols-4 items-center justify-items-center max-w-lg mx-auto"><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">directions_subway</span><span class="font-label-md text-label-md tracking-wider uppercase">Home</span></a><a aria-current="page" class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs transition-colors focus:outline-none text-secondary" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-md text-label-md tracking-wider uppercase">Search</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="saved" href="#"><span class="material-symbols-outlined text-[24px]">bookmark</span><span class="font-label-md text-label-md tracking-wider uppercase">Saved</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-md text-label-md tracking-wider uppercase">Settings</span></a></div></nav></div></div>
+<figcaption><div class="cap-top"><strong>오류 · 오프라인</strong><span class="route">/error/data</span></div>
+<div class="tags"><span class="tag">경로 검색</span><span class="tag b">1차 범위</span></div>
+<p>진단 코드와 캐시된 이전 경로</p></figcaption></figure></div></div></body></html>

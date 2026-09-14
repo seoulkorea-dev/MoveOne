@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html class="light" lang="ko"><head><meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>MoveOne — MOVEONE</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&amp;family=Barlow+Condensed:wght@600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">tailwind.config = { darkMode:"class", theme:{ extend:{
+  colors:{"on-tertiary":"#ffffff","on-secondary":"#ffffff","error-container":"#ffdad6","surface-variant":"#e1e2e6","on-error-container":"#93000a","outline-variant":"#c3c6d5","on-background":"#191c1f","background":"#f8f9fd","on-secondary-container":"#f9f7ff","on-error":"#ffffff","primary-fixed":"#dae2ff","surface-container":"#eceef2","surface-tint":"#2c59bc","tertiary":"#660900","inverse-surface":"#2e3134","primary-container":"#0040a3","surface":"#f8f9fd","on-surface-variant":"#434652","on-primary-fixed":"#001848","tertiary-container":"#901100","primary":"#002c74","on-secondary-fixed":"#001849","on-secondary-fixed-variant":"#003fa4","on-tertiary-container":"#ff9b88","surface-bright":"#f8f9fd","surface-dim":"#d8dade","surface-container-high":"#e7e8ec","outline":"#747784","primary-fixed-dim":"#b2c5ff","on-tertiary-fixed":"#3f0300","tertiary-fixed-dim":"#ffb4a6","surface-container-highest":"#e1e2e6","secondary-container":"#0266ff","on-primary-fixed-variant":"#0040a2","inverse-primary":"#b2c5ff","error":"#ba1a1a","on-surface":"#191c1f","secondary-fixed-dim":"#b3c5ff","on-primary-container":"#99b4ff","on-tertiary-fixed-variant":"#8f1100","surface-container-lowest":"#ffffff","surface-container-low":"#f2f3f8","secondary":"#0050cc","on-primary":"#ffffff","secondary-fixed":"#dae1ff","tertiary-fixed":"#ffdad3","inverse-on-surface":"#eff1f5"},
+  borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"9999px"},
+  spacing:{"space-xs":"0.25rem","layout-margin-mobile":"1rem","space-xxs":"0.125rem","space-md":"0.75rem","space-base":"1rem","layout-margin-tablet":"1.5rem","space-lg":"1.25rem","space-2xl":"2rem","layout-gutter":"0.75rem","space-3xl":"3rem","space-xl":"1.5rem","space-sm":"0.5rem","layout-margin-desktop":"2rem"},
+  fontFamily:{"label-md":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"body-lg":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-xl-mobile":["Barlow Condensed","Noto Sans KR","sans-serif"],"code-time":["Barlow Condensed","Noto Sans KR","sans-serif"],"label-lg":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"body-md-bold":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-lg":["Barlow Condensed","Noto Sans KR","sans-serif"],"body-md":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-sm":["Barlow Condensed","Noto Sans KR","sans-serif"],"headline-xl":["Barlow Condensed","Noto Sans KR","sans-serif"],"body-lg-bold":["Atkinson Hyperlegible Next","Noto Sans KR","sans-serif"],"headline-md":["Barlow Condensed","Noto Sans KR","sans-serif"]},
+  fontSize:{"label-md":["11px",{lineHeight:"14px",letterSpacing:"0.06em",fontWeight:"700"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-xl-mobile":["32px",{lineHeight:"36px",letterSpacing:"0.02em",fontWeight:"700"}],"code-time":["18px",{lineHeight:"20px",letterSpacing:"0.04em",fontWeight:"700"}],"label-lg":["13px",{lineHeight:"16px",letterSpacing:"0.04em",fontWeight:"700"}],"body-md-bold":["14px",{lineHeight:"20px",fontWeight:"700"}],"headline-lg":["28px",{lineHeight:"32px",letterSpacing:"0.01em",fontWeight:"700"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"22px",letterSpacing:"0.02em",fontWeight:"600"}],"headline-xl":["40px",{lineHeight:"44px",letterSpacing:"0.02em",fontWeight:"700"}],"body-lg-bold":["16px",{lineHeight:"24px",fontWeight:"700"}],"headline-md":["22px",{lineHeight:"26px",letterSpacing:"0.01em",fontWeight:"600"}]}
+} } };</script>
+<style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#f8f9fd;}
+body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}
+.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}
+.pt-safe{padding-top:env(safe-area-inset-top,0px);}
+main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}
+::-webkit-scrollbar{display:none;}.no-scrollbar::-webkit-scrollbar{display:none;}</style>
+<style>body{min-height:max(884px,100dvh);}</style>
+</head><body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col antialiased selection:bg-primary-fixed selection:text-on-primary-fixed"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(25,28,31,0.04)]">
+<div class="h-14 px-layout-margin-mobile flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[20px]">directions_transit</span></div>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight uppercase truncate">MOVEONE</h1></div><div class="flex items-center gap-space-xs"><button aria-label="운행 알림" class="w-11 h-11 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))] bg-surface px-layout-margin-mobile"><div class="flex flex-col w-full py-space-base gap-space-md">
+<!-- 검색 진입 -->
+<a class="bg-surface-container-lowest rounded-xl p-space-base shadow-md flex items-center gap-space-sm min-h-[44px]" href="#">
+<span class="material-symbols-outlined text-secondary text-[22px]">search</span>
+<span class="font-body-lg text-body-lg text-outline flex-1">어디로 가시나요?</span>
+<span class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">my_location</span></span></a>
+
+<!-- 퀵 메뉴 4컬럼 -->
+<div class="grid grid-cols-4 gap-space-sm">
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">work</span><span class="font-body-md-bold text-body-md-bold text-on-surface">출근길</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">집 → 회사</span></a>
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">home</span><span class="font-body-md-bold text-body-md-bold text-on-surface">퇴근길</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">회사 → 집</span></a>
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">bookmark</span><span class="font-body-md-bold text-body-md-bold text-on-surface">즐겨찾기</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">3개</span></a>
+<a class="flex flex-col items-center justify-center gap-space-xs py-space-md rounded-xl bg-surface-container-lowest shadow-sm min-h-[44px] hover:shadow transition-shadow" href="#"><span class="material-symbols-outlined text-secondary text-[24px]">history</span><span class="font-body-md-bold text-body-md-bold text-on-surface">최근</span><span class="font-label-md text-label-md text-on-surface-variant tracking-normal">5개</span></a>
+</div>
+
+<!-- 실시간 운행 알림 -->
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex items-start gap-space-sm border-l-4" style="border-left-color:#D9381E">
+<span class="material-symbols-outlined text-[22px] shrink-0 mt-0.5" style="color:#D9381E">warning</span>
+<div class="min-w-0 flex flex-col gap-space-xxs">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-body-md-bold text-body-md-bold text-on-surface">2호선 지연</span>
+<span class="font-label-md text-label-md text-white px-2 py-0.5 rounded-lg" style="background-color:#D9381E">평균 7분</span></div>
+<p class="font-body-md text-body-md text-on-surface-variant">신도림~사당 구간 신호 장애로 지연 중입니다. 대체 경로를 확인하세요.</p>
+<a class="font-label-lg text-label-lg text-secondary mt-1" href="#">대체 경로 보기</a></div></article>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">자주 찾는 경로</h2><a class="font-label-lg text-label-lg text-secondary min-h-[44px] flex items-center" href="#">전체보기<span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span></a></div>
+
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">work</span>
+<span class="font-headline-sm text-headline-sm text-primary">집 → 회사</span></div>
+<span class="font-code-time text-headline-md text-secondary leading-none">42<span class="text-body-md-bold font-body-md-bold">분</span></span></div>
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#00A84D">2</span><span class="font-body-md text-body-md text-on-surface-variant">강남 → 사당</span>
+<span class="material-symbols-outlined text-outline-variant text-[14px]">arrow_right_alt</span>
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#00A5DE">4</span><span class="font-body-md text-body-md text-on-surface-variant">사당 → 명동</span></div>
+<div class="flex items-center justify-between font-label-lg text-label-lg text-on-surface-variant">
+<span>다음 열차 <span class="text-secondary font-bold">4분 후</span></span><span>환승 1회 · 1,600원</span></div></article>
+
+<article class="bg-surface-container-lowest rounded-xl p-space-base shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">school</span>
+<span class="font-headline-sm text-headline-sm text-primary">집 → 판교</span></div>
+<span class="font-code-time text-headline-md text-secondary leading-none">24<span class="text-body-md-bold font-body-md-bold">분</span></span></div>
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#D4003B">신</span><span class="font-body-md text-body-md text-on-surface-variant">강남 → 판교</span></div>
+<div class="flex items-center justify-between font-label-lg text-label-lg text-on-surface-variant">
+<span>다음 열차 <span class="text-secondary font-bold">2분 후</span></span><span>환승 0회 · 2,800원</span></div></article>
+
+<div class="flex items-center justify-between pt-space-xs"><h2 class="font-headline-sm text-headline-sm text-on-surface">최근 이용 정류장</h2></div>
+
+<section class="bg-surface-container-lowest rounded-xl divide-y divide-outline-variant/60 shadow-sm overflow-hidden">
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]">
+<span class="w-6 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#00A84D">2</span>
+<div class="flex-1 min-w-0"><p class="font-body-md-bold text-body-md-bold text-on-surface truncate">강남역</p>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal">외선순환 · 성수 방면</p></div>
+<span class="font-code-time text-code-time text-secondary shrink-0">2분</span></div>
+<div class="flex items-center gap-space-sm p-space-base min-h-[44px]">
+<span class="w-10 h-6 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0" style="background-color:#0068B7">146</span>
+<div class="flex-1 min-w-0"><p class="font-body-md-bold text-body-md-bold text-on-surface truncate">강남역.강남지하상가</p>
+<p class="font-label-md text-label-md text-on-surface-variant tracking-normal">상계 방면 · 2정거장 전</p></div>
+<span class="font-code-time text-code-time shrink-0" style="color:#D9381E">지연</span></div>
+</section>
+</div></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(25,28,31,0.06)]"><div class="h-[60px] px-layout-margin-mobile grid grid-cols-4 items-center justify-items-center max-w-lg mx-auto"><a aria-current="page" class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs transition-colors focus:outline-none text-secondary" data-path="home" href="#"><span class="material-symbols-outlined text-[24px]">directions_subway</span><span class="font-label-md text-label-md tracking-wider uppercase">Home</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="search" href="#"><span class="material-symbols-outlined text-[24px]">search</span><span class="font-label-md text-label-md tracking-wider uppercase">Search</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="saved" href="#"><span class="material-symbols-outlined text-[24px]">bookmark</span><span class="font-label-md text-label-md tracking-wider uppercase">Saved</span></a><a class="flex flex-col items-center justify-center w-full h-full min-h-[44px] min-w-[44px] gap-space-xxs text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none" data-path="settings" href="#"><span class="material-symbols-outlined text-[24px]">settings</span><span class="font-label-md text-label-md tracking-wider uppercase">Settings</span></a></div></nav></body></html>
