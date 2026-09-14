@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Banner } from "@/components/app-chrome";
-import { loadSearch, type StoredSearch } from "@/lib/search-store";
+import { loadSearch, MODE_LABEL, type StoredSearch } from "@/lib/search-store";
 import { formatClockKST, formatKST } from "@/lib/kst";
 import {
   SEGMENT_LABEL,
@@ -18,6 +18,7 @@ import {
   type TransitRoute,
   type Place,
 } from "@/lib/routes";
+import { log } from "@/lib/logger";
 
 const SORT_KEYS: RouteSortKey[] = ["fastest", "cheapest", "fewest_transfers", "least_walk"];
 
@@ -39,10 +40,16 @@ export default function ResultView() {
     const stored = loadSearch();
     if (!stored) {
       // 다른 탭에서 링크를 열었거나 결과가 만료된 경우입니다.
+      log.info("결과 없음 — 검색 화면으로 되돌림");
       router.replace("/search");
       setData("empty");
       return;
     }
+    log.debug("결과 불러옴", {
+      count: stored.routes.length,
+      mode: stored.mode,
+      fromCache: stored.fromCache,
+    });
     setData(stored);
   }, [router]);
 
@@ -78,10 +85,15 @@ export default function ResultView() {
         </div>
 
         {/* 데이터 기준 시각 — 기획서 수락기준 항목이라 지우지 마세요 */}
-        <p className="font-label-md text-label-md text-on-surface-variant tracking-normal">
-          경로 {data.routes.length}개 · 데이터 기준 {formatKST(data.fetchedAt)}
-          {data.fromCache ? " · 저장된 결과" : ""}
-        </p>
+        <div className="flex items-center gap-space-xs flex-wrap">
+          <span className="bg-surface-container-low text-on-surface-variant font-label-md text-label-md px-2 py-0.5 rounded-lg tracking-normal">
+            {MODE_LABEL[data.mode ?? "all"]}
+          </span>
+          <p className="font-label-md text-label-md text-on-surface-variant tracking-normal">
+            경로 {data.routes.length}개 · 데이터 기준 {formatKST(data.fetchedAt)}
+            {data.fromCache ? " · 저장된 결과" : ""}
+          </p>
+        </div>
       </section>
 
       {data.routes.length === 0 ? (
@@ -105,7 +117,11 @@ export default function ResultView() {
                   type="button"
                   role="tab"
                   aria-selected={on}
-                  onClick={() => setSortKey(key)}
+                  data-log={`result.sort.${key}`}
+                  onClick={() => {
+                    log.debug("정렬 변경", { from: sortKey, to: key });
+                    setSortKey(key);
+                  }}
                   className={`shrink-0 px-space-md py-2 rounded-lg font-label-lg text-label-lg shadow-sm transition-all min-h-[36px] flex items-center gap-1.5 ${
                     on
                       ? "bg-primary-container text-on-primary"
@@ -171,12 +187,19 @@ function RouteCard({
 
   /** 상세로 들어가는 것이 곧 "선택"입니다. KPI 선택률의 유일한 근거입니다. */
   function open() {
+    log.info("경로 선택", {
+      routeIndex: route.index,
+      totalTimeMin: route.totalTimeMin,
+      transferCount: route.transferCount,
+    });
     if (searchId) {
       fetch("/api/transit/select", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ searchId, routeIndex: route.index }),
-      }).catch(() => {});
+      }).catch((cause) => log.error("선택 기록 실패", { message: String(cause).slice(0, 120) }));
+    } else {
+      log.debug("선택 기록 건너뜀 — searchId 없음");
     }
     router.push(`/route/detail?i=${route.index}`);
   }
@@ -242,6 +265,7 @@ function RouteCard({
       <button
         type="button"
         onClick={open}
+        data-log="result.detail"
         className="w-full h-12 bg-secondary-container text-on-secondary rounded-lg font-body-md-bold text-body-md-bold flex items-center justify-center gap-2 hover:bg-secondary active:scale-[0.99] transition-all shadow-sm"
       >
         <span>상세보기</span>

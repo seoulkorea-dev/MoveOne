@@ -53,15 +53,16 @@ export function AppHeader({
             >
               <Icon name="notifications" size={22} />
             </button>
-            <form action="/api/auth/logout" method="post">
-              <button
-                type="submit"
-                aria-label="로그아웃"
-                className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"
-              >
-                <Icon name="person" size={18} className="text-on-primary" />
-              </button>
-            </form>
+            {/* 사람 아이콘은 회원 정보로 갑니다.
+                예전에는 여기가 곧 로그아웃이라 눌렀다가 로그아웃되는 사고가 났습니다.
+                로그아웃은 /account 안에 명시적인 버튼으로 두었습니다. */}
+            <Link
+              href="/account"
+              aria-label="회원 정보"
+              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center"
+            >
+              <Icon name="person" size={18} className="text-on-primary" />
+            </Link>
           </div>
         ) : (
           <div className="w-11" />

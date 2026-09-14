@@ -37,8 +37,19 @@ export function buildCacheKey(
 
 type CachedPayload = { routes: TransitRoute[]; fetchedAt: string };
 
-export async function readCache(cacheKey: string): Promise<CachedPayload | null> {
-  const [row] = await query<{ payload: CachedPayload }>(
+/**
+ * 노선 그래픽(loadLane) 캐시 키.
+ * mapObj 는 경로마다 고유하고, 선형 자체는 거의 바뀌지 않습니다.
+ */
+export function laneCacheKey(mapObj: string): string {
+  return `lane:${createHash("sha256").update(mapObj).digest("hex").slice(0, 26)}`;
+}
+
+/** 노선 선형은 열차 시간표와 달리 자주 바뀌지 않습니다. */
+export const LANE_TTL_MINUTES = 60 * 24;
+
+export async function readRawCache<T>(cacheKey: string): Promise<T | null> {
+  const [row] = await query<{ payload: T }>(
     `select payload from route_cache
       where cache_key = $1 and expires_at > now()`,
     [cacheKey],
@@ -54,15 +65,28 @@ export async function readCache(cacheKey: string): Promise<CachedPayload | null>
   return row.payload;
 }
 
-export async function writeCache(cacheKey: string, payload: CachedPayload): Promise<void> {
+export async function writeRawCache<T>(
+  cacheKey: string,
+  payload: T,
+  ttlMinutes: number,
+): Promise<void> {
   await query(
     `insert into route_cache (cache_key, payload, expires_at)
      values ($1, $2, now() + ($3 || ' minutes')::interval)
      on conflict (cache_key) do update
        set payload    = excluded.payload,
            expires_at = excluded.expires_at`,
-    [cacheKey, JSON.stringify(payload), String(TTL_MINUTES)],
+    [cacheKey, JSON.stringify(payload), String(ttlMinutes)],
   );
+}
+
+/** 경로 검색 결과 캐시 — 위 두 함수의 얇은 껍데기입니다. */
+export function readCache(cacheKey: string): Promise<CachedPayload | null> {
+  return readRawCache<CachedPayload>(cacheKey);
+}
+
+export function writeCache(cacheKey: string, payload: CachedPayload): Promise<void> {
+  return writeRawCache(cacheKey, payload, TTL_MINUTES);
 }
 
 /** 만료된 항목 정리. 운영에서는 스케줄러로 돌립니다. */

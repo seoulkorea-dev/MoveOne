@@ -4,15 +4,28 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Banner, BTN_PRIMARY, INPUT_CLASS, SectionTitle } from "@/components/app-chrome";
-import { loadRecent, pushRecent, saveSearch, clearRecent, type RecentPair } from "@/lib/search-store";
+import {
+  clearRecent,
+  loadRecent,
+  pushRecent,
+  saveSearch,
+  type RecentPair,
+  type SearchMode,
+} from "@/lib/search-store";
 import type { Place } from "@/lib/routes";
+import { log } from "@/lib/logger";
 
-const CHIP_ON =
-  "shrink-0 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm flex items-center gap-1.5 transition-all min-h-[36px]";
-const CHIP_OFF =
-  "shrink-0 px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-lg text-label-lg shadow-sm transition-all min-h-[36px]";
-const CHIP_DISABLED =
-  "shrink-0 px-space-md py-2 rounded-lg bg-surface-container-low text-outline font-label-lg text-label-lg min-h-[36px] cursor-not-allowed";
+const CHIP_BASE =
+  "shrink-0 px-space-md py-2 rounded-lg font-label-lg text-label-lg transition-all min-h-[36px] flex items-center gap-1.5";
+const CHIP_ON = `${CHIP_BASE} bg-primary-container text-on-primary shadow-sm`;
+const CHIP_OFF = `${CHIP_BASE} bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm`;
+const CHIP_DISABLED = `${CHIP_BASE} bg-surface-container-low text-outline cursor-not-allowed`;
+
+const MODES: { key: SearchMode; label: string; icon: string }[] = [
+  { key: "all", label: "전체", icon: "commute" },
+  { key: "subway", label: "지하철", icon: "subway" },
+  { key: "bus", label: "버스", icon: "directions_bus" },
+];
 
 export default function SearchForm() {
   const router = useRouter();
@@ -20,6 +33,7 @@ export default function SearchForm() {
   const [arrival, setArrival] = useState<Place | null>(null);
   const [depText, setDepText] = useState("");
   const [arrText, setArrText] = useState("");
+  const [mode, setMode] = useState<SearchMode>("all");
   const [recent, setRecent] = useState<RecentPair[]>([]);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -31,26 +45,34 @@ export default function SearchForm() {
   const canSearch = departure !== null && arrival !== null && !loading;
 
   const runSearch = useCallback(
-    async (from: Place, to: Place) => {
+    async (from: Place, to: Place, searchMode: SearchMode) => {
       setLoading(true);
       setNotice(null);
+      // 좌표는 위치 정보라 로그에 남기지 않습니다. 이름과 수단만 남깁니다.
+      log.info("경로 검색 요청", {
+        from: from.name ?? from.address,
+        to: to.name ?? to.address,
+        mode: searchMode,
+      });
+      const began = Date.now();
 
       try {
         const response = await fetch("/api/transit/search", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ departure: from, arrival: to }),
+          body: JSON.stringify({ departure: from, arrival: to, mode: searchMode }),
         });
         const data = await response.json();
 
         if (!response.ok) {
           // 수도권 밖은 오류가 아니라 안내입니다. 화면을 떠나지 않습니다.
           if (data?.error?.code === "out_of_service_area") {
+            log.info("수도권 밖 안내", { code: data.error.code });
             setNotice(data.error.message ?? "현재 수도권만 지원합니다.");
             setLoading(false);
             return;
           }
-          // 그 밖의 실패(ODsay 응답 지연·오류)는 진단 정보를 갖춘 오류 화면으로 보냅니다.
+          log.error("경로 검색 실패", { status: response.status, code: data?.error?.code });
           router.push(`/error/data?code=${encodeURIComponent(data?.error?.code ?? "unknown")}`);
           return;
         }
@@ -58,14 +80,22 @@ export default function SearchForm() {
         saveSearch({
           departure: from,
           arrival: to,
+          mode: searchMode,
           routes: data.routes ?? [],
           fromCache: !!data.fromCache,
           fetchedAt: data.fetchedAt,
           searchId: data.searchId ?? null,
         });
         pushRecent({ departure: from, arrival: to });
+        log.info("경로 검색 성공", {
+          count: data.routes?.length ?? 0,
+          fromCache: !!data.fromCache,
+          mode: data.mode,
+          elapsedMs: Date.now() - began,
+        });
         router.push("/search/result");
-      } catch {
+      } catch (cause) {
+        log.error("경로 검색 네트워크 오류", { message: String(cause).slice(0, 120) });
         router.push("/error/data?code=network");
       }
     },
@@ -73,6 +103,7 @@ export default function SearchForm() {
   );
 
   function swap() {
+    log.debug("출발·도착 반전");
     setDeparture(arrival);
     setArrival(departure);
     setDepText(arrText);
@@ -82,8 +113,8 @@ export default function SearchForm() {
   return (
     <>
       {/* 출발 / 도착 */}
-      <section className="bg-surface-container-lowest rounded-xl p-space-base shadow-md flex items-center gap-space-sm">
-        <div className="flex flex-col items-center gap-1 pt-3 shrink-0" aria-hidden="true">
+      <section className="bg-surface-container-lowest rounded-xl p-space-base shadow-md flex items-start gap-space-sm">
+        <div className="flex flex-col items-center gap-1 pt-4 shrink-0" aria-hidden="true">
           <span className="w-2.5 h-2.5 rounded-full border-2 border-secondary-container" />
           <span className="w-px h-6 bg-outline-variant" />
           <Icon name="location_on" size={16} className="text-primary" />
@@ -95,6 +126,7 @@ export default function SearchForm() {
             label="출발지"
             placeholder="출발지 입력"
             text={depText}
+            picked={departure}
             onText={setDepText}
             onPick={setDeparture}
           />
@@ -103,6 +135,7 @@ export default function SearchForm() {
             label="도착지"
             placeholder="도착지 입력"
             text={arrText}
+            picked={arrival}
             onText={setArrText}
             onPick={setArrival}
           />
@@ -111,8 +144,9 @@ export default function SearchForm() {
         <button
           type="button"
           onClick={swap}
+          data-log="search.swap"
           aria-label="출발지와 도착지 반전"
-          className="w-11 h-11 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-secondary transition-colors shrink-0"
+          className="w-11 h-11 mt-1 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-secondary transition-colors shrink-0"
         >
           <Icon name="swap_vert" size={20} />
         </button>
@@ -138,26 +172,32 @@ export default function SearchForm() {
         </span>
       </div>
 
-      {/* 교통수단 — ODsay 호출에 아직 수단 필터를 넘기지 않으므로 표시만 합니다 */}
+      {/* 교통수단 — ODsay SearchPathType 으로 실제 전달됩니다 */}
       <section aria-label="교통수단" className="flex flex-col gap-space-sm">
         <h2 className="font-label-lg text-label-lg text-on-surface-variant tracking-normal">
           교통수단
         </h2>
-        <div className="flex items-center gap-space-xs flex-wrap">
-          <span className={CHIP_ON}>
-            <Icon name="subway" size={16} />
-            지하철
-          </span>
-          <span className={CHIP_ON}>
-            <Icon name="directions_bus" size={16} />
-            버스
-          </span>
-          <span className={CHIP_OFF + " opacity-60"} aria-disabled="true">
-            최소 도보
-          </span>
+        <div className="flex items-center gap-space-xs flex-wrap" role="radiogroup">
+          {MODES.map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              role="radio"
+              aria-checked={mode === m.key}
+              data-log={`search.mode.${m.key}`}
+              onClick={() => {
+                log.debug("교통수단 변경", { from: mode, to: m.key });
+                setMode(m.key);
+              }}
+              className={mode === m.key ? CHIP_ON : CHIP_OFF}
+            >
+              <Icon name={m.icon} size={16} filled={mode === m.key} />
+              {m.label}
+            </button>
+          ))}
         </div>
         <p className="font-label-md text-label-md text-on-surface-variant tracking-normal">
-          1차에서는 지하철과 버스를 함께 검색합니다. 수단별 필터는 다음 단계입니다.
+          도보는 어느 경우에나 포함됩니다. 수단을 좁히면 결과가 달라지므로 캐시도 따로 잡힙니다.
         </p>
       </section>
 
@@ -174,7 +214,8 @@ export default function SearchForm() {
                 key={i}
                 type="button"
                 disabled={loading}
-                onClick={() => runSearch(pair.departure, pair.arrival)}
+                data-log="search.recent"
+                onClick={() => runSearch(pair.departure, pair.arrival, mode)}
                 className="w-full flex items-center gap-space-sm p-space-base min-h-[44px] text-left hover:bg-surface-container-low transition-colors disabled:opacity-50"
               >
                 <Icon name="history" size={18} className="text-outline" />
@@ -203,15 +244,29 @@ export default function SearchForm() {
         </>
       ) : null}
 
-      <button
-        type="button"
-        className={BTN_PRIMARY}
-        disabled={!canSearch}
-        onClick={() => departure && arrival && runSearch(departure, arrival)}
-      >
-        <span>{loading ? "경로를 찾는 중…" : "경로 검색"}</span>
-        {loading ? null : <Icon name="search" size={18} />}
-      </button>
+      <div className="flex flex-col gap-space-xs">
+        <button
+          type="button"
+          className={BTN_PRIMARY}
+          data-log="search.submit"
+          disabled={!canSearch}
+          onClick={() => departure && arrival && runSearch(departure, arrival, mode)}
+        >
+          <span>{loading ? "경로를 찾는 중…" : "경로 검색"}</span>
+          {loading ? null : <Icon name="search" size={18} />}
+        </button>
+
+        {/* 버튼이 왜 눌리지 않는지 보이지 않으면 고장으로 느껴집니다. */}
+        {!canSearch && !loading ? (
+          <p className="font-label-md text-label-md text-on-surface-variant tracking-normal text-center">
+            {departure === null && arrival === null
+              ? "출발지와 도착지를 입력하고 목록에서 선택해 주세요."
+              : departure === null
+                ? "출발지를 목록에서 선택해 주세요."
+                : "도착지를 목록에서 선택해 주세요."}
+          </p>
+        ) : null}
+      </div>
     </>
   );
 }
@@ -227,6 +282,7 @@ function PlaceField({
   label,
   placeholder,
   text,
+  picked,
   onText,
   onPick,
 }: {
@@ -234,11 +290,14 @@ function PlaceField({
   label: string;
   placeholder: string;
   text: string;
+  picked: Place | null;
   onText: (value: string) => void;
   onPick: (place: Place | null) => void;
 }) {
   const [options, setOptions] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [empty, setEmpty] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   // 입력할 때마다 호출하면 카카오 API 한도를 낭비합니다.
@@ -246,6 +305,8 @@ function PlaceField({
   useEffect(() => {
     if (text.trim().length < 2) {
       setOptions([]);
+      setError(null);
+      setEmpty(false);
       return;
     }
     const controller = new AbortController();
@@ -255,10 +316,37 @@ function PlaceField({
           signal: controller.signal,
         });
         const data = await response.json();
-        setOptions(data.places ?? []);
-        setOpen(true);
-      } catch {
-        /* 입력이 이어지는 중의 취소는 정상입니다 */
+
+        if (!response.ok) {
+          // 예전에는 여기서 조용히 넘어가서, 키가 없으면 화면이 아무 반응도
+          // 하지 않는 것처럼 보였습니다. 이유를 반드시 보여줍니다.
+          log.error("장소 검색 실패", {
+            field: id,
+            status: response.status,
+            detail: data?.error?.detail,
+          });
+          // 개발 중에는 원인(카카오 응답 본문)까지 화면에 보여줍니다.
+          setError(
+            [data?.error?.message ?? "장소 검색에 실패했습니다.", data?.error?.detail]
+              .filter(Boolean)
+              .join(" — "),
+          );
+          setOptions([]);
+          setEmpty(false);
+          return;
+        }
+
+        const places: Place[] = data.places ?? [];
+        setOptions(places);
+        setError(null);
+        setEmpty(places.length === 0);
+        setOpen(places.length > 0);
+        log.debug("장소 검색 결과", { field: id, query: text, count: places.length });
+      } catch (cause) {
+        // 입력이 이어지는 중의 취소는 정상입니다.
+        if ((cause as Error)?.name === "AbortError") return;
+        setError("장소 검색 중 네트워크 오류가 발생했습니다.");
+        setOptions([]);
       }
     }, 250);
 
@@ -277,7 +365,7 @@ function PlaceField({
   }, []);
 
   return (
-    <div className="relative" ref={boxRef}>
+    <div className="relative flex flex-col gap-space-xxs" ref={boxRef}>
       <label className="sr-only" htmlFor={id}>
         {label}
       </label>
@@ -287,6 +375,7 @@ function PlaceField({
         value={text}
         placeholder={placeholder}
         autoComplete="off"
+        aria-invalid={error ? true : undefined}
         className={INPUT_CLASS}
         onChange={(event) => {
           onText(event.target.value);
@@ -295,17 +384,34 @@ function PlaceField({
         onFocus={() => options.length > 0 && setOpen(true)}
       />
 
+      {/* 선택됐는지 눈으로 보여야 합니다. 검색 버튼 활성화 조건이 이것입니다. */}
+      {picked ? (
+        <p className="font-label-md text-label-md text-ontime tracking-normal flex items-center gap-1">
+          <Icon name="check_circle" size={14} filled />
+          선택됨
+        </p>
+      ) : error ? (
+        <p className="font-label-md text-label-md text-error tracking-normal">{error}</p>
+      ) : empty ? (
+        <p className="font-label-md text-label-md text-on-surface-variant tracking-normal">
+          검색 결과가 없습니다. 역 이름이나 건물명으로 다시 찾아보세요.
+        </p>
+      ) : null}
+
       {open && options.length > 0 ? (
-        <div className="absolute z-20 inset-x-0 top-[calc(100%+4px)] bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg max-h-64 overflow-y-auto p-1">
+        <div className="absolute z-20 inset-x-0 top-13 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg max-h-64 overflow-y-auto p-1">
           {options.map((place, i) => (
             <button
               key={`${place.lat}-${place.lng}-${i}`}
               type="button"
               className="w-full text-left px-space-md py-space-sm rounded-lg hover:bg-surface-container-low min-h-[44px]"
+              data-log="search.place.pick"
               onClick={() => {
+                log.debug("장소 선택", { field: id, name: place.name ?? place.address });
                 onPick(place);
                 onText(place.name ?? place.address ?? "");
                 setOpen(false);
+                setEmpty(false);
               }}
             >
               <span className="block font-body-md text-body-md text-on-surface">

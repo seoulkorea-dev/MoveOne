@@ -6,33 +6,32 @@
 ## 환경
 
 - Next.js 16 (App Router, TypeScript), Node 24, **pnpm 고정** (npm·yarn 금지)
-- 개발 서버 포트 **4100**, Postgres 포트 **5433** (같은 PC의 my-project와 충돌 회피)
+- 개발 서버 포트 **4100**, Postgres 포트 **5433** (같은 PC의 다른 프로젝트와 충돌 회피)
 - 스타일은 **Tailwind v4** (`@import "tailwindcss"` + `@theme`). `tailwind.config.js`는 쓰지 않습니다
 - 새 의존성을 추가하기 전에 **반드시 먼저 물어볼 것**. 이 프로젝트는 의존성을 최소로 유지합니다
 
 ## 명령
 
 ```bash
-docker compose up -d      # DB (compose.yaml, 5433). schema.sql·002_security.sql 자동 적용
-pnpm dev                  # http://localhost:4100
-pnpm test                 # vitest — API 키 없이 통과해야 정상
-pnpm verify               # typecheck → lint → test → build. 커밋 전 필수
-pnpm test:e2e             # playwright. 화면을 건드린 티켓에서만
+docker compose up -d                  # DB
+pnpm dev                              # http://localhost:4100
+pnpm test                             # vitest — API 키 없이 통과해야 정상
+docker compose exec -T db psql -U app -d moveone < db/schema.sql   # 스키마 반영
 ```
 
-## 규칙 파일
+## 범위 — 1차에 하지 않는 것
 
-세부 규칙은 `.claude/rules/` 에 나뉘어 있고 자동으로 로드됩니다. 여기서 다시 import하지 않습니다.
+유저플로우 **s1(인증) + s2(경로 검색)**, 이동수단은 **대중교통 + 도보**,
+지역은 **수도권(서울·경기·인천)** 만입니다.
 
-| 파일 | 다루는 것 | 로드 |
-|---|---|---|
-| `00-project.md` | 1차 범위·제외 범위·확인된 제약 | 항상 |
-| `10-stack.md` | 구조·코드 규약 | 항상 |
-| `20-security.md` | 비밀값·인증·RLS·메일 (타협 불가) | 항상 |
-| `30-testing.md` | 무엇을 테스트하고 무엇을 안 하는가 | 항상 |
-| `40-git.md` | 브랜치·worktree·커밋 | 항상 |
-| `50-external-api.md` | ODsay·카카오 연동 | `lib/odsay/**`, `lib/kakao/**`, `app/api/**` |
-| `60-mobile-ui.md` | 모바일 웹·하이브리드 대비·접근성 | `app/**`, `components/**` |
+아래는 선행 조건이 없어 1차 범위 밖입니다. 요청받지 않았다면 만들지 마세요.
+
+- 예약·결제 (제휴 계약 선행)
+- 실시간 지연·대체 경로 (공공데이터포털 연동이 2차)
+- 이용 이력·영수증·환불
+- 운영자 대시보드
+- 택시·따릉이·킥보드 조합 경로 (조합 엔진은 2차 핵심 과제)
+- 접근성 경로 (엘리베이터 데이터 미확보)
 
 ## 아키텍처에서 반드시 지킬 것
 
@@ -47,7 +46,7 @@ pnpm test:e2e             # playwright. 화면을 건드린 티켓에서만
 ### 2. 시각은 `timestamptz`(UTC)로 저장하고, 표시할 때만 KST로 바꿉니다
 
 변환은 `lib/kst.ts`에서만 합니다. DB나 코드에 KST를 문자열로 넣지 마세요.
-시간대 없는 타입은 쓰지 않습니다.
+`DATETIME`처럼 시간대 없는 타입은 쓰지 않습니다.
 
 ### 3. 캐시 테이블을 사용자 테이블이 FK로 참조하지 않습니다
 
@@ -64,8 +63,7 @@ pnpm test:e2e             # playwright. 화면을 건드린 티켓에서만
 
 ### 5. DB 접근은 `lib/db.ts`의 `query()`로만, 항상 `$1,$2` 바인딩
 
-문자열 이어붙이기 금지. `DATABASE_URL`은 반드시 `moveone_app` 역할입니다
-(`app`은 슈퍼유저라 RLS를 통째로 우회합니다).
+문자열 이어붙이기 금지.
 
 ### 6. 외부 API 응답은 방어적으로 다룹니다
 
@@ -86,34 +84,110 @@ pnpm test:e2e             # playwright. 화면을 건드린 티켓에서만
 | 3분 이하 도보 구간은 요약 칩에서 생략 | 칩이 지저분해집니다 |
 | 정렬 4종 (빠른·저렴한·환승적은·도보적은) | 기획서 수락기준 항목. `sortRoutes()`를 쓰세요 |
 | 수도권 밖이면 검색 전에 안내 | `lib/region.ts`. ODsay 호출을 아끼고 사용자에게 친절합니다 |
+| 장소 검색이 실패하면 **이유를 표시** | 조용히 넘어가면 검색 버튼이 고장난 것처럼 보입니다 |
+| 검색 버튼이 비활성인 이유를 아래에 표시 | 목록에서 선택해야 활성화된다는 걸 알 길이 없습니다 |
+| 교통수단을 캐시 키에 포함 | 안 넣으면 "지하철만"이 직전 "전체" 결과를 돌려줍니다 |
 
 ## 구조
 
 ```
 app/
-  page.tsx                    검색 화면 (서버 컴포넌트)
-  route-search.tsx            검색 UI (클라이언트)
+  page.tsx                    메인 대시보드 (로그인 필요)
   login|register|reset/       인증 화면
-  api/transit/search/         경로 검색 프록시 — 지역판정→캐시→ODsay→정규화→기록
-  api/transit/select/         경로 선택 기록 (KPI)
-  api/places/                 카카오 장소 검색 프록시
+  account/                    회원 정보 · 로그아웃 (RLS 가 도는지 확인하기 좋은 자리)
+  search/page.tsx             경로 검색 입력   + search-form.tsx (클라이언트)
+  search/result/              경로 후보 목록   + result-view.tsx
+  route/detail/               경로 상세·지도   + detail-view.tsx
+  error/data/                 데이터 오류·오프라인
+  api/transit/search/route.ts 경로 검색 프록시 — 지역판정→캐시→ODsay→정규화→기록
+  api/transit/lane/route.ts   노선 선형 조회 (loadLane) — 상세에서만, 24시간 캐시
+  api/transit/select/route.ts 경로 선택 기록 (KPI)
+  api/places/route.ts         카카오 장소 검색 프록시
   api/auth/                   register·login·logout·reset/{request,confirm}
+components/
+  app-chrome.tsx              Shell·헤더·탭바·배너·폼 조각   ← 새 화면은 여기서 시작
+  route-map.tsx               카카오맵 (경로 상세에서만 로드)
+  icon.tsx                    Material Symbols
 lib/
   odsay/{types,client,normalize}.ts   ODsay 경계
   routes.ts                   도메인 타입·정렬·포매터   ← 가장 오래 살아남을 파일
-  cache.ts region.ts db.ts session.ts password.ts kst.ts mailer.ts reset-token.ts
-  __tests__/                  단위 테스트
-db/schema.sql                 11개 테이블
-db/002_security.sql           역할 분리·이메일·잠금·재설정 토큰·RLS
+  auth-guard.ts               requireSession / redirectIfSignedIn
+  search-store.ts             화면 사이 결과 전달 (sessionStorage)
+  cache.ts, region.ts, db.ts, session.ts, password.ts, kst.ts, mailer.ts
+types/kakao-maps.d.ts         카카오맵 SDK 최소 타입 선언
+db/schema.sql                 11개 테이블 · db/002_security.sql 보안 계층
 fixtures/odsay/               응답 샘플. 테스트가 여기를 읽습니다
-tests/e2e/                    Playwright
 ```
+
+## 진입과 보호
+
+`/` 는 세션이 없으면 `/login` 으로 보냅니다. 앱 화면은 서버 컴포넌트 첫 줄에서
+`requireSession()` 을 부릅니다. 미들웨어를 쓰지 않는 이유는 세션 서명이
+`node:crypto` 의 `createHmac` 을 쓰는데 미들웨어가 엣지 런타임이기 때문입니다.
+
+검색 → 목록 → 상세는 `sessionStorage`(`lib/search-store.ts`)로 결과를 넘깁니다.
+좌표를 URL 에 남기지 않고 ODsay 호출도 아끼려는 선택입니다. 결과 링크를 공유해야
+할 일이 생기면 그때 쿼리 방식으로 바꾸세요.
+
+## 지도 — ODsay 가 데이터, 카카오맵이 도구
+
+ODsay 가이드(lab.odsay.com/guide/guide#guideWeb_1)의 3단계를 그대로 따릅니다.
+
+```
+1) searchPubTransPathT   경로 후보 + info.mapObj      app/api/transit/search
+2) loadLane(mapObj)      실제 노선 선형 graphPos      app/api/transit/lane
+3) 카카오맵 Polyline      그리기                      components/route-map.tsx
+```
+
+**경로 데이터는 전부 ODsay 가 만듭니다.** 카카오는 두 군데에서만 쓰입니다 —
+입력한 글자를 좌표로 바꾸는 Local API(`app/api/places`)와, 그 선을 그리는 JS SDK.
+
+- `loadLane` 은 **경로 상세에서만** 부릅니다. 검색 결과 전체에 미리 부르면 경로
+  개수만큼 호출이 늘어나는데 사용자는 보통 하나만 열어봅니다
+- 선형은 거의 안 바뀌므로 **24시간 캐시**합니다 (`laneCacheKey`, `LANE_TTL_MINUTES`)
+- `/api/transit/lane` 은 **로그인 사용자만** 부를 수 있습니다. 열어두면 남의 키로
+  ODsay 한도를 태우는 공개 프록시가 됩니다
+- ODsay 는 x 가 경도, y 가 위도입니다. 카카오맵은 (위도, 경도) 순서라
+  `normalizeLanes()` 에서 뒤집습니다. 안 뒤집으면 선이 서해에 그려집니다
+- **지도는 없어도 되는 것으로 유지하세요.** 키가 없거나 SDK 가 막히거나 loadLane 이
+  실패해도 화면은 동작해야 합니다. 선형을 못 받으면 정차역을 이은 선으로 물러서고,
+  그때는 "정류장을 이은 대략 경로입니다" 라고 지도 위에 밝힙니다
+- `NEXT_PUBLIC_KAKAO_JS_KEY` 는 서버 컴포넌트(`app/route/detail/page.tsx`)에서 읽어
+  props 로 내려보냅니다. 클라이언트 컴포넌트가 직접 `process.env` 를 읽지 않습니다
+
+## 로그
+
+`console.log` 를 직접 쓰지 마세요. `lib/logger.ts` 의 `log.debug / log.info / log.error`
+를 씁니다. 브라우저와 서버가 같은 형식으로 찍혀 한 줄로 이어 볼 수 있습니다.
+
+```
+[MoveOne 17:22:31.481 client] DEBUG 클릭 { name: 'search.submit', tag: 'button' }
+[MoveOne 17:22:31.502 server] DEBUG api.transit.search 시작 { mode: 'subway' }
+[MoveOne 17:22:32.640 server] INFO  api.transit.search 완료 1138ms { routes: 3, fromCache: false }
+```
+
+레벨은 `.env.local` 의 `NEXT_PUBLIC_LOG_LEVEL` 하나로 바꿉니다 —
+`debug`(기본) / `info` / `error` / `silent`. 값이 빌드 시점에 박히므로 바꾸면
+개발 서버를 재시작해야 합니다. 운영에서는 `error` 로 둡니다.
+
+- 무엇을 찍나: 화면 이동, 클릭·엔터, 장소 선택, 검색 요청과 결과, 캐시 적중,
+  정렬 변경, 경로 선택(KPI), 지도 로드, 잡히지 않은 예외
+- 사용자 동작은 `components/action-logger.tsx` 가 layout 에서 한 번에 잡습니다.
+  개별 컨트롤에 `data-log="이름"` 을 붙이면 그 이름으로 찍힙니다
+- **입력값과 좌표는 찍지 않습니다.** 로거의 `redact()` 가 pass·token·session·
+  auth·email 이 들어간 키를 자동으로 가리지만, 애초에 넘기지 않는 것이 맞습니다
+- `console` 사용은 ESLint 가 `lib/logger.ts` 에서만 허용합니다
+
+## 테스트
+
+`pnpm test`는 **ODsay를 호출하지 않습니다.** `fixtures/odsay/*.json`을 읽습니다.
+실제 응답을 받으면 fixture를 교체하세요. 구조가 달라졌으면 테스트가 실패해서 알려줍니다.
+
+순수 함수(정규화·정렬·포매터·지역판정)는 테스트를 먼저 쓰고 고칩니다.
 
 ## 작업 방식
 
-- 티켓 단위로 작업합니다. 목록은 `docs/TICKETS.md`, 착수는 `/ticket <ID>`.
-- 한 티켓 = 한 브랜치 = 한 worktree = 한 PR. 생성은 `./scripts/wt.sh new <ID> <슬러그>`.
 - 코드를 고치면 `git diff`로 무엇이 바뀌었는지 사용자가 확인합니다. 의도하지 않은
-  파일을 건드리지 마세요.
-- `pnpm verify`를 통과시킨 뒤 완료라고 보고하세요. Stop 훅이 자동으로 확인합니다.
-- 커밋·푸시는 사용자가 명시적으로 요청할 때만 합니다.
+  파일을 건드리지 마세요
+- 한 덩어리가 끝나면 커밋합니다. `feat:` `fix:` `refactor:` `chore:` `docs:` 접두어
+- 타입·린트·테스트를 전부 통과시킨 뒤 완료라고 보고하세요

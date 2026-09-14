@@ -95,3 +95,34 @@ export type OdsaySearchPathResponse = {
     msg?: string;
   };
 };
+
+/* ============================================================
+   loadLane — 노선 그래픽 데이터
+   searchPubTransPathT 가 준 info.mapObj 로 조회합니다.
+   가이드: https://lab.odsay.com/guide/guide#guideWeb_1
+   ============================================================ */
+
+/** 좌표. ODsay가 숫자로 줄 때도 문자열로 줄 때도 있어 둘 다 받습니다. */
+export type OdsayGraphPos = {
+  x?: number | string;
+  y?: number | string;
+};
+
+export type OdsayLaneSection = {
+  graphPos?: OdsayGraphPos[];
+};
+
+export type OdsayLaneGraphic = {
+  /** 수단 구분. 문서에 표가 없어 값이 와도 그대로 믿지 않습니다 */
+  class?: number;
+  type?: number;
+  section?: OdsayLaneSection[];
+};
+
+export type OdsayLoadLaneResponse = {
+  result?: {
+    lane?: OdsayLaneGraphic[];
+    boundary?: unknown;
+  };
+  error?: { code?: string; msg?: string };
+};

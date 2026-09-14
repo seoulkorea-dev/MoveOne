@@ -47,6 +47,11 @@ export default [
     },
   },
   {
+    // 로거는 console 이 본업입니다. 다른 곳에서는 log.debug/info/error 를 쓰세요.
+    files: ['lib/logger.ts'],
+    rules: { 'no-console': 'off' },
+  },
+  {
     // DB 접근은 lib/db.ts 를 통해서만
     files: ['app/**/*.ts', 'app/**/*.tsx', 'components/**/*.ts', 'components/**/*.tsx'],
     rules: {

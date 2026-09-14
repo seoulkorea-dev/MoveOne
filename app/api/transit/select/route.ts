@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -33,9 +34,10 @@ export async function POST(request: Request) {
         where id = $1`,
       [searchId, routeIndex],
     );
+    log.info("경로 선택 기록", { routeIndex });
     return NextResponse.json({ ok: true });
   } catch (cause) {
-    console.error("경로 선택 기록 실패:", cause);
+    log.error("경로 선택 기록 실패", { message: String(cause).slice(0, 160) });
     // 기록 실패가 화면 이동을 막으면 안 됩니다.
     return NextResponse.json({ ok: false }, { status: 200 });
   }

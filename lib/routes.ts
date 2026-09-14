@@ -21,6 +21,16 @@ export const SEGMENT_LABEL: Record<SegmentType, string> = {
   taxi: "택시",
 };
 
+/** 구간이 지나는 정차역. 지도 폴리라인과 상세 타임라인이 같이 씁니다. */
+export type RouteStop = {
+  name?: string;
+  lat: number;
+  lng: number;
+};
+
+/** 지도에 그릴 좌표열 하나. 노선 한 구간에 해당합니다. */
+export type LanePath = { lat: number; lng: number }[];
+
 export type Place = {
   lat: number;
   lng: number;
@@ -42,6 +52,13 @@ export type RouteSegment = {
   /** m */
   distanceM?: number;
   stationCount?: number;
+  /**
+   * 이 구간이 지나는 정차역 목록 (승차역 → 하차역).
+   * ODsay 응답의 passStopList 에 이미 좌표가 들어 있어 추가 호출이 없습니다.
+   * 진짜 선로 곡선이 아니라 역을 이은 선이지만, 경로를 보여주기에는 충분합니다.
+   * 곡선이 필요해지면 ODsay loadLane(mapObj) 을 붙입니다.
+   */
+  stops?: RouteStop[];
   /** 2차에서 실시간 도착정보를 붙일 때 쓰는 열쇠 */
   odsayStartStationId?: string;
   odsayEndStationId?: string;
@@ -70,6 +87,11 @@ export type TransitRoute = {
   segments: RouteSegment[];
   /** ODsay pathType 원본 (1:지하철 2:버스 3:복합). 디버깅용 */
   odsayPathType?: number;
+  /**
+   * 노선 그래픽 조회 열쇠. ODsay 가이드 2단계(loadLane)에 넘깁니다.
+   * 이게 있으면 지도에 실제 선형을, 없으면 정차역을 이은 선을 그립니다.
+   */
+  mapObj?: string;
 };
 
 export type RouteSearchResult = {

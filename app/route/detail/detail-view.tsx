@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Banner, SectionTitle } from "@/components/app-chrome";
+import { RouteMap } from "@/components/route-map";
 import { loadSearch, type StoredSearch } from "@/lib/search-store";
 import { formatClockKST } from "@/lib/kst";
 import {
@@ -14,6 +15,7 @@ import {
   type RouteSegment,
   type TransitRoute,
 } from "@/lib/routes";
+import { log } from "@/lib/logger";
 
 const SEGMENT_BG: Record<string, string> = {
   walk: "bg-walk",
@@ -23,7 +25,7 @@ const SEGMENT_BG: Record<string, string> = {
   taxi: "bg-taxi",
 };
 
-export default function DetailView() {
+export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const [stored, setStored] = useState<StoredSearch | null | "empty">(null);
@@ -33,12 +35,14 @@ export default function DetailView() {
   useEffect(() => {
     const data = loadSearch();
     if (!data) {
+      log.info("상세 — 결과 없음, 검색 화면으로 되돌림");
       router.replace("/search");
       setStored("empty");
       return;
     }
+    log.debug("상세 진입", { routeIndex: index, hasKakaoKey: !!kakaoKey });
     setStored(data);
-  }, [router]);
+  }, [router, index, kakaoKey]);
 
   if (stored === null) return <div className="skeleton h-64" aria-busy="true" />;
   if (stored === "empty") return null;
@@ -70,7 +74,7 @@ export default function DetailView() {
         arriveAt={arriveAt}
       />
 
-      <MapPreview />
+      <RouteMap segments={route.segments} mapObj={route.mapObj} appKey={kakaoKey} />
 
       <SectionTitle>구간 안내</SectionTitle>
 
@@ -178,36 +182,6 @@ function Summary({
   );
 }
 
-/**
- * 지도 자리.
- * 카카오맵 JS SDK 연동은 P5입니다. 지금은 자리와 비율만 잡아둡니다.
- * SDK 로드가 실패해도 화면이 동작해야 하므로, 지도는 처음부터
- * "없어도 되는 것"으로 설계합니다.
- */
-function MapPreview() {
-  return (
-    <section
-      aria-label="경로 지도 미리보기"
-      className="relative rounded-xl overflow-hidden shadow-sm border border-outline-variant bg-surface-container-low aspect-[16/10] max-w-full"
-    >
-      <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            "linear-gradient(#c3c6d5 1px,transparent 1px),linear-gradient(90deg,#c3c6d5 1px,transparent 1px)",
-          backgroundSize: "28px 28px",
-        }}
-      />
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-space-xs">
-        <Icon name="map" size={28} className="text-outline" />
-        <span className="font-label-md text-label-md text-on-surface-variant tracking-normal">
-          지도는 다음 단계에서 연결됩니다
-        </span>
-      </div>
-    </section>
-  );
-}
-
 function Step({ segment, last }: { segment: RouteSegment; last: boolean }) {
   const isWalk = segment.type === "walk";
 
@@ -222,6 +196,12 @@ function Step({ segment, last }: { segment: RouteSegment; last: boolean }) {
       ? `${segment.endName}까지 도보`
       : "도보 이동"
     : `${segment.laneName ?? SEGMENT_LABEL[segment.type]}${segment.startName ? ` ${segment.startName} 승차` : ""}`;
+
+  // 승차역·하차역을 뺀 중간 정차역. 시안의 "양재 → 양재시민의숲 → …" 자리입니다.
+  const middle = (segment.stops ?? [])
+    .slice(1, -1)
+    .map((stop) => stop.name)
+    .filter((name): name is string => !!name);
 
   const sub = isWalk
     ? segment.distanceM !== undefined
@@ -262,6 +242,11 @@ function Step({ segment, last }: { segment: RouteSegment; last: boolean }) {
           {sub ? (
             <p className="font-label-md text-label-md text-on-surface-variant tracking-normal mt-0.5">
               {sub}
+            </p>
+          ) : null}
+          {middle.length > 0 ? (
+            <p className="font-label-md text-label-md text-on-surface-variant tracking-normal mt-1">
+              {middle.join(" → ")}
             </p>
           ) : null}
         </div>

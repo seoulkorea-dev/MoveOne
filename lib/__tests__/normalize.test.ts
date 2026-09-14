@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { normalizePaths } from "@/lib/odsay/normalize";
+import { normalizeLanes, normalizePaths } from "@/lib/odsay/normalize";
 import type { OdsaySearchPathResponse } from "@/lib/odsay/types";
 import { sortRoutes } from "@/lib/routes";
 
@@ -53,6 +53,21 @@ describe("normalizePaths", () => {
     // 공공데이터포털 ID에는 영문이 섞이므로 문자열이 안전하다
     expect(routes[0].segments[1].odsayStartStationId).toBe("4307");
   });
+
+  it("정차역 좌표를 숫자로 바꿔 담는다", () => {
+    // ODsay는 정차역 x/y를 문자열로 준다. 지도 폴리라인이 이 값을 쓴다.
+    const stops = routes[0].segments[1].stops;
+    expect(stops).toBeDefined();
+    expect(stops!.length).toBeGreaterThanOrEqual(2);
+    expect(typeof stops![0].lat).toBe("number");
+    expect(stops![0].name).toBe("강남");
+    expect(stops![0].lat).toBeCloseTo(37.497942, 5);
+    expect(stops![0].lng).toBeCloseTo(127.027621, 5);
+  });
+
+  it("도보 구간에는 정차역이 없다", () => {
+    expect(routes[0].segments[0].stops).toBeUndefined();
+  });
 });
 
 describe("normalizePaths — 방어", () => {
@@ -101,5 +116,176 @@ describe("sortRoutes", () => {
       { info: { totalTime: 50, payment: 1500 }, subPath: [] },
     ]);
     expect(sortRoutes(mixed, "cheapest")[0].totalFare).toBe(1500);
+  });
+});
+
+describe("정차역 정규화 — 방어", () => {
+  it("좌표가 깨진 역은 버리고 나머지는 살린다", () => {
+    // 역 하나 때문에 폴리라인이 엉뚱한 곳으로 튀면 안 됩니다.
+    const routes = normalizePaths([
+      {
+        info: { totalTime: 10 },
+        subPath: [
+          {
+            trafficType: 1,
+            passStopList: {
+              stations: [
+                { stationName: "정상", x: "127.0", y: "37.5" },
+                { stationName: "깨짐", x: "없음", y: "37.5" },
+                { stationName: "정상2", x: "127.1", y: "37.6" },
+              ],
+            },
+          },
+        ],
+      },
+    ]);
+    const stops = routes[0].segments[0].stops;
+    expect(stops).toHaveLength(2);
+    expect(stops!.map((s) => s.name)).toEqual(["정상", "정상2"]);
+  });
+
+  it("정차역이 하나도 쓸 수 없으면 undefined 다", () => {
+    const routes = normalizePaths([
+      {
+        info: { totalTime: 10 },
+        subPath: [{ trafficType: 2, passStopList: { stations: [{ x: "", y: "" }] } }],
+      },
+    ]);
+    expect(routes[0].segments[0].stops).toBeUndefined();
+  });
+
+  it("빈 문자열 좌표를 0으로 읽지 않는다", () => {
+    // Number("") 는 NaN 이 아니라 0 입니다. 그냥 Number() 를 쓰면
+    // (0, 0) — 기니만 앞바다 — 이 유효한 좌표로 살아남아,
+    // 지도에 한국에서 아프리카까지 선이 그려집니다.
+    const routes = normalizePaths([
+      {
+        info: { totalTime: 10 },
+        subPath: [
+          {
+            trafficType: 1,
+            passStopList: {
+              stations: [
+                { stationName: "빈값", x: "", y: "" },
+                { stationName: "공백", x: "  ", y: "  " },
+                { stationName: "정상", x: "127.0", y: "37.5" },
+              ],
+            },
+          },
+        ],
+      },
+    ]);
+    const stops = routes[0].segments[0].stops;
+    expect(stops).toHaveLength(1);
+    expect(stops![0].name).toBe("정상");
+  });
+
+  it("(0, 0) 과 범위 밖 좌표를 버린다", () => {
+    const routes = normalizePaths([
+      {
+        info: { totalTime: 10 },
+        subPath: [
+          {
+            trafficType: 1,
+            passStopList: {
+              stations: [
+                { stationName: "널섬", x: "0", y: "0" },
+                { stationName: "범위밖", x: "999", y: "999" },
+                { stationName: "정상", x: "127.0", y: "37.5" },
+              ],
+            },
+          },
+        ],
+      },
+    ]);
+    expect(routes[0].segments[0].stops).toHaveLength(1);
+  });
+
+  it("구간의 승·하차 지점도 (0, 0) 이면 버린다", () => {
+    const routes = normalizePaths([
+      { info: { totalTime: 10 }, subPath: [{ trafficType: 3, startX: 0, startY: 0 }] },
+    ]);
+    expect(routes[0].segments[0].start).toBeUndefined();
+  });
+});
+
+describe("normalizeLanes — 노선 선형", () => {
+  it("graphPos 를 위도·경도로 뒤집어 담는다", () => {
+    // ODsay 는 x 가 경도, y 가 위도입니다. 지도 라이브러리는 (위도, 경도) 순서라
+    // 여기서 뒤집지 않으면 선이 서해 한가운데에 그려집니다.
+    const lanes = normalizeLanes({
+      result: {
+        lane: [
+          {
+            section: [
+              {
+                graphPos: [
+                  { x: 127.0276, y: 37.4979 },
+                  { x: "127.1112", y: "37.3948" },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(lanes).toHaveLength(1);
+    expect(lanes[0][0]).toEqual({ lat: 37.4979, lng: 127.0276 });
+    expect(lanes[0][1].lat).toBeCloseTo(37.3948, 4);
+  });
+
+  it("빈 문자열 좌표를 0으로 읽지 않는다", () => {
+    const lanes = normalizeLanes({
+      result: {
+        lane: [
+          {
+            section: [
+              {
+                graphPos: [
+                  { x: 127.0276, y: 37.4979 },
+                  { x: "", y: "" },
+                  { x: "127.1112", y: "37.3948" },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(lanes[0]).toHaveLength(2);
+  });
+
+  it("점이 둘 미만인 구간은 버린다", () => {
+    const lanes = normalizeLanes({
+      result: { lane: [{ section: [{ graphPos: [{ x: 127, y: 37 }] }] }] },
+    });
+    expect(lanes).toEqual([]);
+  });
+
+  it("좌표가 깨진 점만 버리고 나머지는 살린다", () => {
+    const lanes = normalizeLanes({
+      result: {
+        lane: [
+          {
+            section: [
+              {
+                graphPos: [
+                  { x: 127.0, y: 37.5 },
+                  { x: "없음", y: "37.5" },
+                  { x: 127.1, y: 37.6 },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(lanes[0]).toHaveLength(2);
+  });
+
+  it("응답이 비었거나 모양이 달라도 예외를 던지지 않는다", () => {
+    expect(normalizeLanes(undefined)).toEqual([]);
+    expect(normalizeLanes({})).toEqual([]);
+    expect(normalizeLanes({ result: {} })).toEqual([]);
   });
 });

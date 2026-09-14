@@ -6,6 +6,7 @@ import { normalizePaths } from "@/lib/odsay/normalize";
 import { checkRegion } from "@/lib/region";
 import type { Place, RouteSearchResult, TransitRoute } from "@/lib/routes";
 import { getSession } from "@/lib/session";
+import { log, startTimer } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,23 @@ type SearchBody = {
   departure?: Partial<Place>;
   arrival?: Partial<Place>;
   sessionId?: string;
+  mode?: string;
 };
+
+/**
+ * 교통수단.
+ * ODsay SearchPathType — 0:전체 1:지하철 2:버스.
+ * 수단을 좁히면 호출 결과가 달라지므로 캐시 키에도 함께 넣어야 합니다.
+ * 안 넣으면 "지하철만" 검색이 직전의 "전체" 결과를 그대로 돌려줍니다.
+ */
+export const SEARCH_MODES = ["all", "subway", "bus"] as const;
+export type SearchMode = (typeof SEARCH_MODES)[number];
+
+const SEARCH_PATH_TYPE: Record<SearchMode, 0 | 1 | 2> = { all: 0, subway: 1, bus: 2 };
+
+function toMode(value: unknown): SearchMode {
+  return SEARCH_MODES.includes(value as SearchMode) ? (value as SearchMode) : "all";
+}
 
 function isPlace(value: Partial<Place> | undefined): value is Place {
   return (
@@ -63,12 +80,16 @@ export async function POST(request: Request) {
   // --- 2. 지역 판정 (ODsay를 부르기 전에) ---
   const region = checkRegion(departure, arrival);
   if (!region.ok) {
+    log.info("수도권 밖 — ODsay 호출 생략");
     return fail(region.message, 422, "out_of_service_area");
   }
 
+  const mode = toMode(body.mode);
+  const done = startTimer("api.transit.search", { mode });
+
   const session = await getSession();
   const userId = session?.uid ?? null;
-  const cacheKey = buildCacheKey(departure, arrival);
+  const cacheKey = buildCacheKey(departure, arrival, { m: mode });
   const startedAt = Date.now();
 
   let routes: TransitRoute[];
@@ -82,6 +103,7 @@ export async function POST(request: Request) {
     routes = cached.routes;
     fetchedAt = cached.fetchedAt;
     fromCache = true;
+    log.debug("캐시 적중 — ODsay 호출 없음", { routes: routes.length });
     await logApiCall({
       provider: "odsay",
       endpoint: "/v1/api/searchPubTransPathT",
@@ -97,6 +119,7 @@ export async function POST(request: Request) {
         sy: departure.lat,
         ex: arrival.lng,
         ey: arrival.lat,
+        searchPathType: SEARCH_PATH_TYPE[mode],
       });
 
       // --- 5. 정규화 ---
@@ -125,7 +148,8 @@ export async function POST(request: Request) {
         errorMessage: `${error.code}: ${error.message}`,
         userId,
       });
-      console.error("ODsay 호출 실패:", error.code, error.message);
+      log.error("ODsay 호출 실패", { code: error.code, status: error.status });
+      done({ code: error.code }, "error");
       return fail(odsayErrorMessage(error), 502, error.code);
     }
   }
@@ -144,15 +168,17 @@ export async function POST(request: Request) {
     });
   } catch (cause) {
     // 기록 실패가 검색 결과를 못 보게 만들면 안 됩니다.
-    console.error("검색 기록 실패:", cause);
+    log.error("검색 기록 실패", { message: String(cause).slice(0, 160) });
   }
 
-  const payload: RouteSearchResult & { searchId: string | null } = {
+  const payload: RouteSearchResult & { searchId: string | null; mode: SearchMode } = {
     routes,
     fromCache,
     fetchedAt,
     searchId,
+    mode,
   };
+  done({ routes: routes.length, fromCache, searchId: searchId ? "기록됨" : "없음" });
   return NextResponse.json(payload);
 }
 

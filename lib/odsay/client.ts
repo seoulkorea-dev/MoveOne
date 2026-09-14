@@ -1,5 +1,5 @@
 import "server-only";
-import type { OdsaySearchPathResponse } from "./types";
+import type { OdsayLoadLaneResponse, OdsaySearchPathResponse } from "./types";
 
 /**
  * ODsay 호출은 반드시 서버에서만 합니다.
@@ -58,17 +58,20 @@ export type OdsayCallResult = {
  * ODsay는 HTTP 200에 error 필드를 실어 보내는 경우가 있어,
  * 상태 코드만 보고 성공으로 판단하면 안 됩니다.
  */
-export async function searchPubTransPath(
-  params: SearchPathParams,
+/**
+ * ODsay 호출 공통부.
+ *
+ * ODsay는 HTTP 200에 error 필드를 실어 보내는 경우가 있어,
+ * 상태 코드만 보고 성공으로 판단하면 안 됩니다.
+ */
+async function callOdsay<T extends { error?: { code?: string; msg?: string } }>(
+  endpoint: string,
+  params: Record<string, string>,
   options: { timeoutMs?: number } = {},
-): Promise<OdsayCallResult> {
-  const url = new URL(`${BASE_URL}/searchPubTransPathT`);
+): Promise<{ data: T; elapsedMs: number }> {
+  const url = new URL(`${BASE_URL}/${endpoint}`);
   url.searchParams.set("apiKey", apiKey());
-  url.searchParams.set("SX", String(params.sx));
-  url.searchParams.set("SY", String(params.sy));
-  url.searchParams.set("EX", String(params.ex));
-  url.searchParams.set("EY", String(params.ey));
-  url.searchParams.set("SearchPathType", String(params.searchPathType ?? 0));
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   url.searchParams.set("output", "json");
   url.searchParams.set("lang", "0");
 
@@ -81,14 +84,10 @@ export async function searchPubTransPath(
     const elapsedMs = Date.now() - started;
 
     if (!response.ok) {
-      throw new OdsayError(
-        "http",
-        `ODsay가 ${response.status}로 응답했습니다.`,
-        response.status,
-      );
+      throw new OdsayError("http", `ODsay가 ${response.status}로 응답했습니다.`, response.status);
     }
 
-    const data = (await response.json()) as OdsaySearchPathResponse;
+    const data = (await response.json()) as T;
 
     if (data.error) {
       // 대표적인 코드:
@@ -111,6 +110,39 @@ export async function searchPubTransPath(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** 대중교통 길찾기. 가이드 1단계. */
+export function searchPubTransPath(
+  params: SearchPathParams,
+  options: { timeoutMs?: number } = {},
+): Promise<OdsayCallResult> {
+  return callOdsay<OdsaySearchPathResponse>(
+    "searchPubTransPathT",
+    {
+      SX: String(params.sx),
+      SY: String(params.sy),
+      EX: String(params.ex),
+      EY: String(params.ey),
+      SearchPathType: String(params.searchPathType ?? 0),
+    },
+    options,
+  );
+}
+
+/**
+ * 노선 그래픽 데이터. 가이드 2단계.
+ *
+ * 1단계 응답의 info.mapObj 를 그대로 넘깁니다. 가이드는
+ * `mapObject=0:0@{mapObj}` 형식을 쓰는데, 응답이 이미 접두어를 달고
+ * 오는 경우가 있어 있으면 그대로 두고 없을 때만 붙입니다.
+ */
+export function loadLane(
+  mapObj: string,
+  options: { timeoutMs?: number } = {},
+): Promise<{ data: OdsayLoadLaneResponse; elapsedMs: number }> {
+  const mapObject = /^\d+:\d+@/.test(mapObj) ? mapObj : `0:0@${mapObj}`;
+  return callOdsay<OdsayLoadLaneResponse>("loadLane", { mapObject }, options);
 }
 
 /** 오류 코드를 사용자에게 보여줄 한국어 문장으로 바꿉니다. */

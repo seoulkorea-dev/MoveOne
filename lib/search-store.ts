@@ -22,9 +22,20 @@ const KEY = "moveone:last-search";
 /** 너무 오래된 결과로 상세 화면을 그리지 않습니다. */
 const MAX_AGE_MS = 30 * 60 * 1000;
 
+/** 교통수단. API 의 SEARCH_MODES 와 같은 값이어야 합니다. */
+export type SearchMode = "all" | "subway" | "bus";
+
+export const MODE_LABEL: Record<SearchMode, string> = {
+  all: "전체",
+  subway: "지하철",
+  bus: "버스",
+};
+
 export type StoredSearch = {
   departure: Place;
   arrival: Place;
+  /** 이 결과가 어떤 수단으로 검색된 것인지. 결과 화면에 표시합니다. */
+  mode: SearchMode;
   routes: TransitRoute[];
   fromCache: boolean;
   /** 데이터 기준 시각 — 기획서 수락기준 항목이라 화면에 그대로 표시합니다 */
