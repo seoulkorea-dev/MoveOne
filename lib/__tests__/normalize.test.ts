@@ -87,6 +87,32 @@ describe("normalizePaths — 방어", () => {
     expect(routes[0].segments[0].type).toBe("walk");
   });
 
+  it("ODsay 의 -1(모름)을 값으로 받지 않는다", () => {
+    // 실제 응답에 totalWalkTime: -1 이 옵니다. 그대로 두면 화면에 "-1분" 이 찍힙니다.
+    const routes = normalizePaths([
+      {
+        info: { totalTime: 16, totalWalk: -1, totalDistance: -1, payment: -1 },
+        subPath: [{ trafficType: 3, sectionTime: -1, distance: -1, stationCount: -1 }],
+      },
+    ]);
+    expect(routes[0].totalWalkM).toBe(0);
+    expect(routes[0].totalDistanceM).toBeNull();
+    expect(routes[0].totalFare).toBeNull();
+    expect(routes[0].segments[0].durationMin).toBeUndefined();
+    expect(routes[0].segments[0].distanceM).toBeUndefined();
+    expect(routes[0].segments[0].stationCount).toBeUndefined();
+  });
+
+  it("0 은 정상값이라 살린다", () => {
+    // 환승 0회, 도보 0m 는 "모름" 이 아닙니다.
+    const routes = normalizePaths([
+      { info: { totalTime: 10, totalWalk: 0, payment: 0 }, subPath: [{ trafficType: 1, sectionTime: 0 }] },
+    ]);
+    expect(routes[0].totalWalkM).toBe(0);
+    expect(routes[0].totalFare).toBe(0);
+    expect(routes[0].segments[0].durationMin).toBe(0);
+  });
+
   it("요금이 없으면 0이 아니라 null이다", () => {
     // 0원과 "모름"은 다릅니다. 화면에서 "요금 정보 없음"으로 표시됩니다.
     const routes = normalizePaths([{ info: { totalTime: 10 }, subPath: [] }]);

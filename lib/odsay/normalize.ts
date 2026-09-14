@@ -38,6 +38,18 @@ function num(value: unknown): number | undefined {
 }
 
 /**
+ * 소요시간·거리·정거장 수처럼 **음수가 될 수 없는** 값.
+ *
+ * ODsay 는 "모름" 을 -1 로 표현합니다 (실제 응답의 totalWalkTime: -1).
+ * 그대로 두면 화면에 "-1분" 이 찍히고 진행 바 계산도 어긋납니다.
+ * 0 은 정상값이라(환승 0회, 도보 0m) 음수만 걸러냅니다.
+ */
+function nonNegative(value: unknown): number | undefined {
+  const parsed = num(value);
+  return parsed !== undefined && parsed >= 0 ? parsed : undefined;
+}
+
+/**
  * 좌표 하나를 숫자로. ODsay 는 정류장·선형 좌표를 문자열로 주기도 합니다.
  *
  * Number("") 가 NaN 이 아니라 **0** 이라는 점이 함정입니다. 빈 문자열을
@@ -104,9 +116,9 @@ export function normalizeSegment(sub: OdsaySubPath, index: number): RouteSegment
     endName: sub.endName,
     start: coord(sub.startY, sub.startX),
     end: coord(sub.endY, sub.endX),
-    durationMin: num(sub.sectionTime),
-    distanceM: num(sub.distance),
-    stationCount: num(sub.stationCount),
+    durationMin: nonNegative(sub.sectionTime),
+    distanceM: nonNegative(sub.distance),
+    stationCount: nonNegative(sub.stationCount),
     stops: toStops(sub),
     // 숫자 ID를 문자열로 보관합니다. 기관마다 ID 형식이 달라
     // (공공데이터포털은 영문이 섞입니다) 문자열이 안전합니다.
@@ -126,11 +138,11 @@ export function normalizePath(path: OdsayPath, index: number): TransitRoute {
 
   return {
     index,
-    totalTimeMin: num(info.totalTime) ?? 0,
-    totalFare: num(info.payment) ?? null,
+    totalTimeMin: nonNegative(info.totalTime) ?? 0,
+    totalFare: nonNegative(info.payment) ?? null,
     transferCount,
-    totalWalkM: num(info.totalWalk) ?? 0,
-    totalDistanceM: num(info.totalDistance) ?? null,
+    totalWalkM: nonNegative(info.totalWalk) ?? 0,
+    totalDistanceM: nonNegative(info.totalDistance) ?? null,
     segments,
     odsayPathType: num(path.pathType),
     mapObj: typeof info.mapObj === "string" && info.mapObj.length > 0 ? info.mapObj : undefined,
