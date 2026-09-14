@@ -84,3 +84,9 @@ export function relativeKo(value: Date | string | number, now: Date = new Date()
 export function toUtcIso(value: Date | string | number): string {
   return toDate(value).toISOString().replace(/\.\d{3}Z$/, "Z");
 }
+
+/** "08:32" — 경로 카드의 출발·도착 시각처럼 시:분만 필요할 때. */
+export function formatClockKST(value: Date | string | number): string {
+  const p = partsOf(toDate(value), { hour: "2-digit", minute: "2-digit" });
+  return `${pick(p, "hour")}:${pick(p, "minute")}`;
+}

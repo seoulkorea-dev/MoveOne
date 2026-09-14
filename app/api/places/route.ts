@@ -72,7 +72,9 @@ export async function GET(request: Request) {
     const data = (await response.json()) as { documents?: KakaoDocument[] };
 
     const places: Place[] = (data.documents ?? [])
-      .map((doc) => {
+      // 반환 타입을 명시합니다. satisfies 로 두면 name 이 "필수인데 undefined 가능"한
+      // 타입이 되어 아래 filter 의 타입 술어가 Place 와 어긋납니다.
+      .map((doc): Place | null => {
         const lat = Number(doc.y);
         const lng = Number(doc.x);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
@@ -81,7 +83,7 @@ export async function GET(request: Request) {
           lng,
           name: doc.place_name,
           address: doc.road_address_name || doc.address_name,
-        } satisfies Place;
+        };
       })
       .filter((p): p is Place => p !== null);
 

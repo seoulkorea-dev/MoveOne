@@ -1,3 +1,7 @@
+import Link from "next/link";
+import { redirectIfSignedIn } from "@/lib/auth-guard";
+import { Banner, BTN_PRIMARY, CARD, Field, Shell } from "@/components/app-chrome";
+
 export const dynamic = "force-dynamic";
 
 const MESSAGES: Record<string, string> = {
@@ -15,45 +19,76 @@ export default async function RegisterPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  await redirectIfSignedIn();
+
   const { error } = await searchParams;
 
   return (
-    <main>
-      <header className="app"><h1>회원가입</h1></header>
-      <p className="sub">비밀번호는 scrypt 단방향 해시로만 저장됩니다. 이메일은 비밀번호 재설정에만 사용합니다.</p>
-
-      {error ? <p className="note">{MESSAGES[error] ?? `오류: ${error}`}</p> : null}
-
-      <div className="search-card">
-        <form action="/api/auth/register" method="post">
-          <div className="field">
-            <label htmlFor="username">아이디</label>
-            <input id="username" name="username" type="text" autoComplete="username"
-                   required minLength={3} maxLength={30} placeholder="영문 소문자, 숫자, . _ -" />
-          </div>
-          <div className="field">
-            <label htmlFor="email">이메일</label>
-            <input id="email" name="email" type="email" autoComplete="email"
-                   required maxLength={254} placeholder="비밀번호 재설정에 사용됩니다" />
-          </div>
-          <div className="field">
-            <label htmlFor="password">비밀번호</label>
-            <input id="password" name="password" type="password" autoComplete="new-password"
-                   required minLength={8} placeholder="8자 이상" />
-          </div>
-          <div className="field">
-            <label htmlFor="password_confirm">비밀번호 확인</label>
-            <input id="password_confirm" name="password_confirm" type="password"
-                   autoComplete="new-password" required minLength={8} />
-          </div>
-          <button className="btn" type="submit">가입하고 로그인</button>
-        </form>
-        <p className="hint">이미 계정이 있으신가요? <a href="/login">로그인</a></p>
+    <Shell title="SIGN UP" back="/login" actions={false}>
+      <div className="flex flex-col gap-space-xs pt-space-sm">
+        <h2 className="font-headline-lg text-headline-lg text-primary">회원가입</h2>
+        <p className="font-body-md text-body-md text-on-surface-variant">
+          비밀번호 재설정에 사용하므로 이메일은 필수입니다.
+        </p>
       </div>
 
-      <footer className="app">
-        <p>비밀번호를 5회 틀리면 계정이 잠기고, 이메일로 재설정해야 풀립니다.</p>
-      </footer>
-    </main>
+      {error ? (
+        <Banner tone="error" icon="error" title="가입하지 못했습니다">
+          {MESSAGES[error] ?? `오류: ${error}`}
+        </Banner>
+      ) : null}
+
+      <form action="/api/auth/register" method="post" className={CARD}>
+        <Field
+          id="email"
+          label="이메일"
+          placeholder="name@example.com"
+          type="email"
+          autoComplete="email"
+          required
+          hint="비밀번호를 잊었을 때 재설정 링크를 이 주소로 보냅니다."
+        />
+        <Field
+          id="username"
+          label="아이디"
+          placeholder="영문 소문자, 숫자, . _ -"
+          type="text"
+          autoComplete="username"
+          required
+          minLength={3}
+          maxLength={30}
+        />
+        <Field
+          id="password"
+          label="비밀번호"
+          placeholder="8자 이상"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          hint="비밀번호는 scrypt 단방향 해시로만 저장됩니다."
+        />
+        <Field
+          id="password_confirm"
+          label="비밀번호 확인"
+          placeholder="다시 한 번 입력하세요"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
+
+        <button type="submit" className={BTN_PRIMARY}>
+          가입하기
+        </button>
+      </form>
+
+      <p className="text-center font-body-md text-body-md text-on-surface-variant">
+        이미 계정이 있으신가요?{" "}
+        <Link href="/login" className="text-secondary font-body-md-bold text-body-md-bold">
+          로그인
+        </Link>
+      </p>
+    </Shell>
   );
 }
