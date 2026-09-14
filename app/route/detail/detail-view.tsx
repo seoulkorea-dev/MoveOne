@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Banner, SectionTitle } from "@/components/app-chrome";
 import { RouteMap } from "@/components/route-map";
-import { loadSearch, type StoredSearch } from "@/lib/search-store";
+import { useStoredSearch } from "@/lib/search-store";
+import { useNow } from "@/lib/use-now";
 import { formatClockKST } from "@/lib/kst";
 import {
   SEGMENT_LABEL,
@@ -28,24 +29,25 @@ const SEGMENT_BG: Record<string, string> = {
 export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
   const router = useRouter();
   const params = useSearchParams();
-  const [stored, setStored] = useState<StoredSearch | null | "empty">(null);
+  const stored = useStoredSearch();
+  const now = useNow();
 
   const index = Number(params.get("i"));
 
+  // 효과는 "밖으로 내보내는 일"만 합니다 — 화면 이동과 로그.
+  // 저장소를 읽어 state 에 퍼오는 일은 useStoredSearch 가 대신합니다.
   useEffect(() => {
-    const data = loadSearch();
-    if (!data) {
+    if (stored === undefined) return;
+    if (stored === null) {
       log.info("상세 — 결과 없음, 검색 화면으로 되돌림");
       router.replace("/search");
-      setStored("empty");
       return;
     }
     log.debug("상세 진입", { routeIndex: index, hasKakaoKey: !!kakaoKey });
-    setStored(data);
-  }, [router, index, kakaoKey]);
+  }, [stored, router, index, kakaoKey]);
 
-  if (stored === null) return <div className="skeleton h-64" aria-busy="true" />;
-  if (stored === "empty") return null;
+  if (stored === undefined) return <div className="skeleton h-64" aria-busy="true" />;
+  if (stored === null) return null;
 
   const route = stored.routes.find((r) => r.index === index);
   if (!route) {
@@ -61,7 +63,6 @@ export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
     );
   }
 
-  const now = Date.now();
   const arriveAt = now + route.totalTimeMin * 60_000;
 
   return (
@@ -74,7 +75,14 @@ export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
         arriveAt={arriveAt}
       />
 
-      <RouteMap segments={route.segments} mapObj={route.mapObj} appKey={kakaoKey} />
+      {/* key 를 mapObj 로 두면 다른 경로로 바뀔 때 지도 컴포넌트가 새로 시작합니다.
+          안에서 이전 선형을 지우는 코드를 둘 필요가 없어집니다. */}
+      <RouteMap
+        key={route.mapObj ?? `route-${route.index}`}
+        segments={route.segments}
+        mapObj={route.mapObj}
+        appKey={kakaoKey}
+      />
 
       <SectionTitle>구간 안내</SectionTitle>
 

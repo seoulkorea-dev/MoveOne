@@ -115,13 +115,14 @@ export function RouteMap({
   const [lanes, setLanes] = useState<Lanes>(mapObj ? "pending" : null);
 
   // ── 2단계: 노선 선형 받기 ──────────────────────────────────
+  //
+  // 초기값은 useState 에서 이미 정했습니다(mapObj 가 있으면 "pending").
+  // 여기서 다시 setLanes("pending") 을 부르면 효과 안에서 곧바로 state 를
+  // 바꾸는 것이라 렌더가 한 번 더 돕니다. mapObj 가 바뀔 때의 초기화는
+  // 부모가 <RouteMap key={mapObj}> 로 컴포넌트를 새로 시작시켜 해결합니다.
   useEffect(() => {
-    if (!mapObj) {
-      setLanes(null);
-      return;
-    }
+    if (!mapObj) return;
     let cancelled = false;
-    setLanes("pending");
 
     fetch(`/api/transit/lane?mapObj=${encodeURIComponent(mapObj)}`)
       .then(async (response) => {

@@ -155,6 +155,29 @@ ODsay 가이드(lab.odsay.com/guide/guide#guideWeb_1)의 3단계를 그대로 �
 - `NEXT_PUBLIC_KAKAO_JS_KEY` 는 서버 컴포넌트(`app/route/detail/page.tsx`)에서 읽어
   props 로 내려보냅니다. 클라이언트 컴포넌트가 직접 `process.env` 를 읽지 않습니다
 
+## 화면 상태 — 효과 안에서 setState 하지 않습니다
+
+Next 16 의 `eslint-config-next` 는 React 컴파일러 규칙을 켭니다. 아래 두 가지가
+오류로 잡히므로, 새 화면을 만들 때 처음부터 이 방식으로 쓰세요.
+
+| 하지 말 것 | 대신 |
+| --- | --- |
+| `useEffect(() => setX(loadSearch()), [])` | `useStoredSearch()` / `useRecent()` (`lib/search-store.ts`) |
+| 렌더 본문에서 `Date.now()` | `useNow()` (`lib/use-now.ts`) |
+| 효과 안에서 곧바로 `setX(...)` 로 초기화 | `useState` 초기값, 또는 부모가 `key` 로 새로 시작 |
+
+`sessionStorage` 와 시계는 React 바깥의 외부 시스템입니다. 정식 도구는
+`useSyncExternalStore` 이고, 위 훅들이 그것을 감싼 것입니다. 스냅샷은 **값이
+같으면 참조도 같아야** 하므로 원문 문자열을 키로 캐시합니다. 이 캐시를 빼면
+렌더가 무한히 반복됩니다.
+
+저장소를 읽는 훅은 세 상태를 구분합니다 — `undefined`(아직 모름, 스켈레톤),
+`null`(없음, `/search` 로 되돌림), 값. 두 가지로 줄이면 결과가 있는데도
+"없음" 화면이 한 번 스칩니다.
+
+효과에는 **밖으로 내보내는 일**만 남깁니다 — 화면 이동, 로그, fetch.
+비동기 콜백 안의 `setState` 는 규칙에 걸리지 않습니다.
+
 ## 로그
 
 `console.log` 를 직접 쓰지 마세요. `lib/logger.ts` 의 `log.debug / log.info / log.error`
@@ -176,7 +199,9 @@ ODsay 가이드(lab.odsay.com/guide/guide#guideWeb_1)의 3단계를 그대로 �
   개별 컨트롤에 `data-log="이름"` 을 붙이면 그 이름으로 찍힙니다
 - **입력값과 좌표는 찍지 않습니다.** 로거의 `redact()` 가 pass·token·session·
   auth·email 이 들어간 키를 자동으로 가리지만, 애초에 넘기지 않는 것이 맞습니다
-- `console` 사용은 ESLint 가 `lib/logger.ts` 에서만 허용합니다
+- `console` 사용은 ESLint 가 `lib/logger.ts` 와 `lib/mailer.ts` 에서만 허용합니다.
+  mailer 는 개발 모드에서 메일을 터미널에 상자 모양으로 찍는데, 비밀번호 재설정
+  링크를 눈으로 찾아 눌러야 해서 그 모양이 유지되어야 합니다
 
 ## 테스트
 

@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Banner, SectionTitle } from "@/components/app-chrome";
-import { loadSearch, type StoredSearch } from "@/lib/search-store";
+import { useStoredSearch } from "@/lib/search-store";
 import { formatKST } from "@/lib/kst";
 import { formatFare, sortRoutes, type Place } from "@/lib/routes";
 
@@ -14,12 +13,10 @@ import { formatFare, sortRoutes, type Place } from "@/lib/routes";
  * 다만 지금 상황과 다를 수 있으므로 저장 시각을 반드시 함께 적습니다.
  */
 export default function LastResult() {
-  const [stored, setStored] = useState<StoredSearch | null>(null);
+  const stored = useStoredSearch();
 
-  useEffect(() => {
-    setStored(loadSearch());
-  }, []);
-
+  // undefined(아직 모름)와 null(없음) 모두 여기서는 아무것도 그리지 않습니다.
+  // 곁다리로 보여주는 영역이라 스켈레톤을 띄울 필요가 없습니다.
   if (!stored || stored.routes.length === 0) return null;
 
   const top = sortRoutes(stored.routes, "fastest").slice(0, 2);

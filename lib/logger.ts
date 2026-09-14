@@ -87,7 +87,7 @@ function emit(level: Exclude<LogLevel, "silent">, event: string, detail?: unknow
 
   const prefix = `[MoveOne ${stamp()} ${WHERE}] ${level.toUpperCase().padEnd(5)} ${event}`;
 
-  // eslint-disable-next-line no-console
+  // 이 파일에서만 console 을 직접 씁니다 (eslint.config.mjs 의 예외).
   const sink = level === "error" ? console.error : level === "info" ? console.info : console.debug;
 
   if (detail === undefined) sink(prefix);

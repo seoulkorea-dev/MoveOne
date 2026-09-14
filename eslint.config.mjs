@@ -67,8 +67,21 @@ export default defineConfig([
 
   {
     // 로거는 console 이 본업입니다. 다른 곳에서는 log.debug/info/error 를 쓰세요.
-    files: ['lib/logger.ts'],
+    //
+    // mailer 는 예외가 하나 더 있습니다. 개발 모드에서 메일을 보내지 않고
+    // 터미널에 그대로 찍는데, 비밀번호 재설정 링크를 눈으로 찾아 눌러야 하므로
+    // 여러 줄 상자 모양이 그대로 보여야 합니다. log.info 로 바꾸면 한 줄로
+    // 뭉개져 링크를 찾기 어렵습니다.
+    files: ['lib/logger.ts', 'lib/mailer.ts'],
     rules: { 'no-console': 'off' },
+  },
+
+  {
+    // no-page-custom-font 는 Pages Router 기준 규칙입니다. pages/_document.js
+    // 밖에서 폰트를 불러오면 그 페이지에서만 적용된다는 경고인데, App Router 의
+    // 루트 layout.tsx 는 정의상 모든 화면에 적용됩니다. 여기서는 오탐입니다.
+    files: ['app/**/layout.tsx'],
+    rules: { '@next/next/no-page-custom-font': 'off' },
   },
 
   {
