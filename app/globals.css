@@ -1,0 +1,379 @@
+@import "tailwindcss";
+
+/* ============================================================
+   MoveOne 디자인 토큰
+   Tailwind v4는 @theme 안의 값을 유틸리티 클래스로 만들어 줍니다.
+   예:  --color-subway  →  bg-subway / text-subway / border-subway
+   Stitch에서 가져온 마크업도 이 토큰을 쓰면 색이 한 벌로 맞습니다.
+   ============================================================ */
+@theme {
+  --color-ink: #131922;
+  --color-ink-2: #4a5663;
+  --color-ink-3: #77838f;
+  --color-surface: #ffffff;
+  --color-surface-2: #eaeef3;
+  --color-line: #dde3ea;
+  --color-accent: #1f6feb;
+
+  /* 이동수단 색 — 경로 칩과 지도 폴리라인이 같은 색을 써야 합니다 */
+  --color-walk: #6b7785;
+  --color-subway: #1f6feb;
+  --color-bus: #1a7a51;
+  --color-bike: #a9641f;
+  --color-taxi: #a9641f;
+
+  --color-ok: #1a7a51;
+  --color-warn: #a9641f;
+  --color-danger: #b33a2b;
+
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+
+/* ------------------------------------------------------------
+   아래는 기존 화면(route-search.tsx)이 쓰는 클래스입니다.
+   Tailwind를 얹어도 화면이 깨지지 않도록 그대로 남겨 두었습니다.
+   Stitch 마크업으로 화면을 하나씩 옮길 때, 옮긴 화면의 클래스만
+   여기서 지우면 됩니다. 한 번에 다 바꿀 필요가 없습니다.
+   ------------------------------------------------------------ */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-2: #eaeef3;
+  --ink: #131922;
+  --ink-2: #4a5663;
+  --ink-3: #77838f;
+  --line: #dde3ea;
+  --accent: #1f6feb;
+  --accent-soft: #e6eefb;
+  --ok: #1a7a51;
+  --warn: #a9641f;
+  --danger: #b33a2b;
+  --walk: #6b7785;
+  --subway: #1f6feb;
+  --bus: #1a7a51;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1116;
+    --surface: #161c24;
+    --surface-2: #1d242e;
+    --ink: #e7ecf3;
+    --ink-2: #a2aebc;
+    --ink-3: #7b8795;
+    --line: #27313e;
+    --accent: #6aa6f0;
+    --accent-soft: #14243a;
+    --ok: #58c490;
+    --warn: #d99a55;
+    --danger: #e58273;
+    --walk: #8b97a5;
+    --subway: #6aa6f0;
+    --bus: #58c490;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.65;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 680px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 32px 72px;
+}
+
+header.app {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+header.app h1 {
+  font-size: 24px;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+header.app .tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+.sub { margin: 0 0 24px; color: var(--ink-2); font-size: 14.5px; }
+
+/* ---------- 검색 폼 ---------- */
+
+.search-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.field { position: relative; margin-bottom: 10px; }
+.field:last-of-type { margin-bottom: 14px; }
+
+.field label {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+}
+
+.field input {
+  font: inherit;
+  font-size: 15px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.field input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.field input::placeholder { color: var(--ink-3); }
+
+.picked {
+  margin-top: 5px;
+  font-size: 12.5px;
+  color: var(--ok);
+  font-family: var(--mono);
+}
+
+.suggest {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.35);
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.suggest button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 10px;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.suggest button:hover,
+.suggest button:focus-visible { background: var(--surface-2); outline: none; }
+.suggest .nm { font-size: 14.5px; }
+.suggest .ad { font-size: 12.5px; color: var(--ink-3); }
+
+.swap {
+  display: block;
+  margin: -4px 0 8px auto;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.swap:hover { color: var(--ink); border-color: var(--ink-3); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ---------- 정렬 ---------- */
+
+.sorts { display: flex; gap: 6px; flex-wrap: wrap; margin: 22px 0 12px; }
+.sorts button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.sorts button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------- 결과 ---------- */
+
+.meta {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  margin: 0 0 10px;
+}
+
+.routes { display: grid; gap: 10px; }
+
+.route {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+.route:hover { border-color: var(--ink-3); }
+.route[aria-expanded="true"] { border-color: var(--accent); }
+
+.route-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.route-time {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.route-fare { font-family: var(--mono); font-size: 14px; color: var(--ink-2); }
+.route-facts {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 11px; }
+.chip {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  color: #fff;
+}
+.chip.walk { background: var(--walk); }
+.chip.subway { background: var(--subway); }
+.chip.bus { background: var(--bus); }
+.chip.bike, .chip.taxi { background: var(--warn); }
+.chain .arrow { color: var(--ink-3); font-size: 11px; }
+
+.detail {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+}
+.seg { display: grid; grid-template-columns: 62px 1fr; gap: 12px; font-size: 13.5px; }
+.seg .t {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.seg .b strong { font-weight: 600; }
+.seg .b span { display: block; color: var(--ink-3); font-size: 12.5px; }
+
+/* ---------- 상태 ---------- */
+
+.note {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--danger);
+  border-radius: 10px;
+  padding: 13px 15px;
+  font-size: 14px;
+  color: var(--ink-2);
+  margin-top: 18px;
+}
+.note.info { border-left-color: var(--accent); }
+.note strong { color: var(--ink); }
+
+.empty {
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 14px;
+  padding: 36px 12px;
+}
+
+.skeleton {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  height: 92px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface-2), transparent);
+  animation: shimmer 1.3s infinite;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+footer.app {
+  margin-top: 32px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}

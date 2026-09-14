@@ -1,0 +1,119 @@
+{
+  "_comment": "ODsay searchPubTransPathT 응답 샘플 (구조 확인용 자리표시자). P0에서 실제 키로 호출해 받은 응답으로 이 파일을 교체하세요. 교체 후 pnpm test를 돌리면 lib/odsay/types.ts 와 normalize.ts 가 실제 응답과 맞는지 바로 드러납니다.",
+  "result": {
+    "searchType": 0,
+    "outTrafficCheck": 0,
+    "busCount": 1,
+    "subwayCount": 1,
+    "subwayBusCount": 1,
+    "pointDistance": 13200,
+    "startRadius": 700,
+    "endRadius": 700,
+    "path": [
+      {
+        "pathType": 1,
+        "info": {
+          "trafficDistance": 12800,
+          "totalWalk": 760,
+          "totalTime": 41,
+          "payment": 2150,
+          "busTransitCount": 0,
+          "subwayTransitCount": 1,
+          "mapObj": "0:0@1234:5678",
+          "firstStartStation": "강남",
+          "lastEndStation": "판교",
+          "totalStationCount": 6,
+          "busStationCount": 0,
+          "subwayStationCount": 6,
+          "totalDistance": 13560,
+          "totalWalkTime": 11
+        },
+        "subPath": [
+          {
+            "trafficType": 3,
+            "distance": 420,
+            "sectionTime": 6,
+            "stationCount": 0
+          },
+          {
+            "trafficType": 1,
+            "distance": 12800,
+            "sectionTime": 24,
+            "stationCount": 6,
+            "lane": [{ "name": "신분당선", "subwayCode": 109 }],
+            "startName": "강남",
+            "startX": 127.027621,
+            "startY": 37.497942,
+            "endName": "판교",
+            "endX": 127.111194,
+            "endY": 37.394761,
+            "startID": 4307,
+            "endID": 4313,
+            "way": "정자",
+            "wayCode": 2,
+            "startExitNo": "4",
+            "passStopList": {
+              "stations": [
+                { "index": 0, "stationID": 4307, "stationName": "강남", "x": "127.027621", "y": "37.497942" },
+                { "index": 1, "stationID": 4308, "stationName": "양재", "x": "127.034700", "y": "37.484200" },
+                { "index": 5, "stationID": 4313, "stationName": "판교", "x": "127.111194", "y": "37.394761" }
+              ]
+            }
+          },
+          {
+            "trafficType": 3,
+            "distance": 340,
+            "sectionTime": 5,
+            "stationCount": 0
+          }
+        ]
+      },
+      {
+        "pathType": 3,
+        "info": {
+          "totalWalk": 1180,
+          "totalTime": 58,
+          "payment": 1500,
+          "busTransitCount": 1,
+          "subwayTransitCount": 1,
+          "totalDistance": 14900,
+          "totalWalkTime": 17
+        },
+        "subPath": [
+          { "trafficType": 3, "distance": 300, "sectionTime": 4, "stationCount": 0 },
+          {
+            "trafficType": 2,
+            "distance": 6200,
+            "sectionTime": 22,
+            "stationCount": 12,
+            "lane": [{ "busNo": "440", "type": 11 }],
+            "startName": "강남역",
+            "startX": 127.02761,
+            "startY": 37.49794,
+            "endName": "양재역",
+            "endX": 127.0347,
+            "endY": 37.4842,
+            "startID": 22001,
+            "endID": 22014
+          },
+          {
+            "trafficType": 1,
+            "distance": 7400,
+            "sectionTime": 18,
+            "stationCount": 4,
+            "lane": [{ "name": "신분당선", "subwayCode": 109 }],
+            "startName": "양재",
+            "startX": 127.0347,
+            "startY": 37.4842,
+            "endName": "판교",
+            "endX": 127.111194,
+            "endY": 37.394761,
+            "startID": 4308,
+            "endID": 4313
+          },
+          { "trafficType": 3, "distance": 880, "sectionTime": 13, "stationCount": 0 }
+        ]
+      }
+    ]
+  }
+}

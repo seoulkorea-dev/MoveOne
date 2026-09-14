@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:17
+    container_name: moveone-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: moveone
+      # 컨테이너는 UTC. KST 변환은 애플리케이션이 담당합니다.
+      TZ: UTC
+    ports:
+      - "5433:5432"      # 5432는 이전 프로젝트가 쓰고 있을 수 있어 5433으로 둡니다
+    volumes:
+      - moveone_pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ./db/002_security.sql:/docker-entrypoint-initdb.d/002_security.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d moveone"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  moveone_pgdata:

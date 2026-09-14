@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "notion": {
+      "type": "http",
+      "url": "https://mcp.notion.com/mcp"
+    },
+    "stitch": {
+      "command": "npx",
+      "args": ["-y", "@google/stitch-mcp"],
+      "env": {}
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {}
+    },
+    "manyfast": {
+      "type": "http",
+      "url": "${MANYFAST_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${MANYFAST_MCP_TOKEN}"
+      }
+    },
+    "odsay": {
+      "type": "http",
+      "url": "${ODSAY_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${ODSAY_MCP_TOKEN}"
+      }
+    }
+  }
+}
