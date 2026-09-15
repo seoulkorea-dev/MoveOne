@@ -30,18 +30,68 @@ const LANG_KO = 0;
 const SDK_TIMEOUT_MS = 8000;
 
 let sdkPromise: Promise<void> | null = null;
+let keyShapeLogged = false;
 
-function loadSubwaySdk(apiKey: string): Promise<void> {
+/**
+ * 키를 손질합니다. 서버 쪽 `lib/odsay/client.ts` 의 apiKey() 와 같은 처리입니다.
+ *
+ * 왜 필요한가: ODsay 키는 base64 계열이라 `+` `/` `=` 가 들어갑니다.
+ * 콘솔에서 복사할 때 이미 URL 인코딩된 형태(`%2B` 같은 것)로 들어오는 일이
+ * 있는데, 그걸 그대로 다시 encodeURIComponent 하면 **이중 인코딩**이 되어
+ * 인증에 실패합니다. 서버 경로에는 이 처리가 있었는데(fix-07) 노선도 쪽에는
+ * 빠져 있었습니다.
+ */
+function normalizeKey(raw: string): string {
+  const trimmed = raw.trim();
+  let key = trimmed;
+  if (/%[0-9A-Fa-f]{2}/.test(trimmed)) {
+    try {
+      key = decodeURIComponent(trimmed);
+    } catch {
+      // 잘못된 이스케이프면 원본을 그대로 씁니다.
+    }
+  }
+
+  // 값은 남기지 않고 "모양"만 한 번 남깁니다. 인증 실패 때 길이·공백·
+  // 이중 인코딩을 먼저 의심할 수 있게 하려는 것입니다.
+  if (!keyShapeLogged) {
+    keyShapeLogged = true;
+    log.debug("ODsay 웹 키 모양", {
+      length: key.length,
+      trimmed: trimmed.length !== raw.length,
+      wasUrlEncoded: key !== trimmed,
+      hasSpace: /\s/.test(key),
+      hasBase64Chars: /[+/=]/.test(key),
+    });
+  }
+
+  return key;
+}
+
+function loadSubwaySdk(rawKey: string): Promise<void> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("브라우저가 아닙니다"));
   }
   if (window.odsay?.maps?.Subway) return Promise.resolve();
   if (sdkPromise) return sdkPromise;
 
+  const apiKey = normalizeKey(rawKey);
+
   sdkPromise = new Promise<void>((resolve, reject) => {
+    // 스크립트 자체는 200 으로 내려오는데 콜백이 안 오는 경우가 있습니다.
+    // 대부분 키 인증 실패입니다 — SDK 가 콘솔에 [ApiKeyAuthFailed] 를 찍고
+    // 콜백을 부르지 않습니다. 그 상황에서 "응답 없음" 만 보여주면
+    // 원인을 못 찾으므로 여기서 짚어 줍니다.
     const timer = setTimeout(() => {
       sdkPromise = null;
-      reject(new Error(`ODsay 노선도 SDK 응답이 ${SDK_TIMEOUT_MS / 1000}초 안에 없었습니다`));
+      reject(
+        new Error(
+          `노선도 SDK 가 ${SDK_TIMEOUT_MS / 1000}초 안에 응답하지 않았습니다. ` +
+            "콘솔에 [ApiKeyAuthFailed] 가 보이면 키 문제입니다 — " +
+            "ODsay 는 플랫폼마다 키가 따로이므로, 서버 키가 아니라 " +
+            "Web 플랫폼으로 발급받은 키를 NEXT_PUBLIC_ODSAY_WEB_KEY 에 넣어야 합니다",
+        ),
+      );
     }, SDK_TIMEOUT_MS);
 
     window.odsaySubwayReady = () => {

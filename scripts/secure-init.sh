@@ -22,6 +22,8 @@ add_ignore '.env.*'
 add_ignore '!.env*.example'
 add_ignore '*.bak-*'
 add_ignore '*.pem'
+add_ignore 'check-stubs.d.ts'
+add_ignore 'tsconfig.check.json'
 
 echo
 echo "2) pre-commit 훅 연결"

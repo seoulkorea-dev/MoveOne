@@ -14,8 +14,33 @@ cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || exit 1
 
 command -v jq >/dev/null || { echo "jq 가 필요합니다:  sudo apt install jq"; exit 1; }
 
-KEY=$(grep -E '^ODSAY_API_KEY=' .env.local 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"'"'"' \r')
+readkey() { grep -E "^$1=" .env.local 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"'"'"' \r'; }
+KEY=$(readkey ODSAY_API_KEY)
+WEBKEY=$(readkey NEXT_PUBLIC_ODSAY_WEB_KEY)
 [ -z "$KEY" ] && { echo ".env.local 에서 ODSAY_API_KEY 를 못 찾았습니다."; exit 1; }
+
+# ── 0단계: 키 점검 ─────────────────────────────────────────────────────
+# ODsay 는 "플랫폼마다 1개의 API Key" 입니다. 서버 키와 웹 키는 값이 다릅니다.
+# 같은 값을 넣으면 노선도가 [ApiKeyAuthFailed] 로 죽습니다.
+echo
+echo "── 키 점검 ──"
+printf '  서버 키   %s자\n' "${#KEY}"
+if [ -z "$WEBKEY" ]; then
+  echo "  웹   키   없음 — 노선도를 쓰려면 NEXT_PUBLIC_ODSAY_WEB_KEY 가 필요합니다"
+elif [ "$WEBKEY" = "$KEY" ]; then
+  echo "  웹   키   ${#WEBKEY}자 — ⚠ 서버 키와 값이 같습니다. 이것이 ApiKeyAuthFailed 의 원인입니다."
+  echo "            ODsay 콘솔에서 Web 플랫폼 키를 따로 발급받으세요."
+else
+  printf '  웹   키   %s자 (서버 키와 다름 — 정상)\n' "${#WEBKEY}"
+  body=$(curl -s -H "Referer: http://localhost:4100/" \
+    "https://api.odsay.com/v1/api/subway/sdk.js?apiKey=$WEBKEY&callback=cb" | head -c 200)
+  case "$body" in
+    *ApiKeyAuthFailed*) echo "            ⚠ SDK 응답: 인증 실패. Web 플랫폼에 http://localhost:4100 이 등록됐는지 확인하세요" ;;
+    *error*)            echo "            ⚠ SDK 응답에 오류가 있습니다: $(printf '%s' "$body" | head -c 120)" ;;
+    "")                 echo "            ⚠ SDK 응답이 비었습니다" ;;
+    *)                  echo "            SDK 응답 정상 (스크립트가 내려옵니다)" ;;
+  esac
+fi
 
 # 자주 쓰는 지점 (경도,위도 — ODsay 순서)
 coord() {
