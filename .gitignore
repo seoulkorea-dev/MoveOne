@@ -47,3 +47,7 @@ playwright-report/
 test-results/
 *.bak-*
 CLAUDE.local.md
+
+# 비밀값·패치 백업
+.env.*
+!.env*.example
