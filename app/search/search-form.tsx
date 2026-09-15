@@ -1,15 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Banner, BTN_PRIMARY, INPUT_CLASS, SectionTitle } from "@/components/app-chrome";
 import {
   clearRecent,
-  loadRecent,
   pushRecent,
   saveSearch,
-  type RecentPair,
+  useRecent,
   type SearchMode,
 } from "@/lib/search-store";
 import type { Place } from "@/lib/routes";
@@ -33,14 +32,16 @@ export default function SearchForm() {
   const [arrival, setArrival] = useState<Place | null>(null);
   const [depText, setDepText] = useState("");
   const [arrText, setArrText] = useState("");
-  const [mode, setMode] = useState<SearchMode>("all");
-  const [recent, setRecent] = useState<RecentPair[]>([]);
+  // 홈 화면의 이동수단 타일이 /search?mode=subway 로 들어옵니다.
+  // 값이 이상하면 조용히 "전체" 로 둡니다 — 잘못된 쿼리로 화면이 깨지면 안 됩니다.
+  const params = useSearchParams();
+  const [mode, setMode] = useState<SearchMode>(() => {
+    const requested = params.get("mode");
+    return requested === "subway" || requested === "bus" ? requested : "all";
+  });
+  const recent = useRecent();
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-
-  useEffect(() => {
-    setRecent(loadRecent());
-  }, []);
 
   const canSearch = departure !== null && arrival !== null && !loading;
 
@@ -72,7 +73,12 @@ export default function SearchForm() {
             setLoading(false);
             return;
           }
-          log.error("경로 검색 실패", { status: response.status, code: data?.error?.code });
+          log.error("경로 검색 실패", {
+            status: response.status,
+            code: data?.error?.code,
+            message: data?.error?.message,
+            detail: data?.error?.detail,
+          });
           router.push(`/error/data?code=${encodeURIComponent(data?.error?.code ?? "unknown")}`);
           return;
         }
@@ -233,10 +239,8 @@ export default function SearchForm() {
           </section>
           <button
             type="button"
-            onClick={() => {
-              clearRecent();
-              setRecent([]);
-            }}
+            // clearRecent 가 알림을 보내므로 useRecent 가 알아서 다시 읽습니다
+            onClick={() => clearRecent()}
             className="self-end font-label-lg text-label-lg text-secondary min-h-[44px] px-space-xs"
           >
             최근 검색 지우기
@@ -300,19 +304,20 @@ function PlaceField({
   const [empty, setEmpty] = useState(false);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
+  // 두 글자 미만이면 아예 찾지 않습니다. 예전에는 여기서 state 를 비웠는데,
+  // 효과 안에서 곧바로 setState 하면 렌더가 한 번 더 돕니다. 대신 아래에서
+  // 화면에 내보낼 때 걸러냅니다 (visibleOptions/visibleError/visibleEmpty).
+  const query = text.trim();
+  const active = query.length >= 2;
+
   // 입력할 때마다 호출하면 카카오 API 한도를 낭비합니다.
   // 250ms 쉬었을 때만 보냅니다. 이 값을 늘리거나 지우지 마세요.
   useEffect(() => {
-    if (text.trim().length < 2) {
-      setOptions([]);
-      setError(null);
-      setEmpty(false);
-      return;
-    }
+    if (!active) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/places?q=${encodeURIComponent(text)}`, {
+        const response = await fetch(`/api/places?q=${encodeURIComponent(query)}`, {
           signal: controller.signal,
         });
         const data = await response.json();
@@ -320,8 +325,17 @@ function PlaceField({
         if (!response.ok) {
           // 예전에는 여기서 조용히 넘어가서, 키가 없으면 화면이 아무 반응도
           // 하지 않는 것처럼 보였습니다. 이유를 반드시 보여줍니다.
-          log.error("장소 검색 실패", { field: id, status: response.status });
-          setError(data?.error?.message ?? "장소 검색에 실패했습니다.");
+          log.error("장소 검색 실패", {
+            field: id,
+            status: response.status,
+            detail: data?.error?.detail,
+          });
+          // 개발 중에는 원인(카카오 응답 본문)까지 화면에 보여줍니다.
+          setError(
+            [data?.error?.message ?? "장소 검색에 실패했습니다.", data?.error?.detail]
+              .filter(Boolean)
+              .join(" — "),
+          );
           setOptions([]);
           setEmpty(false);
           return;
@@ -332,7 +346,7 @@ function PlaceField({
         setError(null);
         setEmpty(places.length === 0);
         setOpen(places.length > 0);
-        log.debug("장소 검색 결과", { field: id, query: text, count: places.length });
+        log.debug("장소 검색 결과", { field: id, query, count: places.length });
       } catch (cause) {
         // 입력이 이어지는 중의 취소는 정상입니다.
         if ((cause as Error)?.name === "AbortError") return;
@@ -345,7 +359,12 @@ function PlaceField({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [text]);
+  }, [query, active, id]);
+
+  // 입력이 두 글자 미만으로 줄면 직전 결과를 보여주지 않습니다.
+  const visibleOptions = active ? options : [];
+  const visibleError = active ? error : null;
+  const visibleEmpty = active ? empty : false;
 
   useEffect(() => {
     function onDocClick(event: MouseEvent) {
@@ -366,13 +385,13 @@ function PlaceField({
         value={text}
         placeholder={placeholder}
         autoComplete="off"
-        aria-invalid={error ? true : undefined}
+        aria-invalid={visibleError ? true : undefined}
         className={INPUT_CLASS}
         onChange={(event) => {
           onText(event.target.value);
           onPick(null); // 다시 타이핑하면 선택이 해제됩니다
         }}
-        onFocus={() => options.length > 0 && setOpen(true)}
+        onFocus={() => visibleOptions.length > 0 && setOpen(true)}
       />
 
       {/* 선택됐는지 눈으로 보여야 합니다. 검색 버튼 활성화 조건이 이것입니다. */}
@@ -381,17 +400,17 @@ function PlaceField({
           <Icon name="check_circle" size={14} filled />
           선택됨
         </p>
-      ) : error ? (
-        <p className="font-label-md text-label-md text-error tracking-normal">{error}</p>
-      ) : empty ? (
+      ) : visibleError ? (
+        <p className="font-label-md text-label-md text-error tracking-normal">{visibleError}</p>
+      ) : visibleEmpty ? (
         <p className="font-label-md text-label-md text-on-surface-variant tracking-normal">
           검색 결과가 없습니다. 역 이름이나 건물명으로 다시 찾아보세요.
         </p>
       ) : null}
 
-      {open && options.length > 0 ? (
+      {open && visibleOptions.length > 0 ? (
         <div className="absolute z-20 inset-x-0 top-13 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg max-h-64 overflow-y-auto p-1">
-          {options.map((place, i) => (
+          {visibleOptions.map((place, i) => (
             <button
               key={`${place.lat}-${place.lng}-${i}`}
               type="button"

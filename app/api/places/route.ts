@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logApiCall } from "@/lib/cache";
+import { CAPITAL_AREA_BOUNDS } from "@/lib/region";
 import type { Place } from "@/lib/routes";
 import { log, startTimer } from "@/lib/logger";
 
@@ -46,11 +47,21 @@ export async function GET(request: Request) {
 
   const url = new URL(KAKAO_KEYWORD_URL);
   url.searchParams.set("query", q);
-  url.searchParams.set("size", "8");
-  // 수도권만 지원하므로 서울 시청을 중심으로 가중치를 둡니다.
-  url.searchParams.set("x", "126.9780");
-  url.searchParams.set("y", "37.5665");
-  url.searchParams.set("radius", "70000");
+  url.searchParams.set("size", "10");
+  url.searchParams.set("sort", "accuracy");
+  /*
+   * 검색 범위를 서비스 범위와 같게 맞춥니다.
+   *
+   * 예전에는 서울시청 중심 radius=70000 을 썼는데, 카카오의 radius 는
+   * **최대 20000(20km)** 이라 400 을 돌려받았습니다. 20000 으로 줄이면
+   * 이번엔 수원·인천이 검색되지 않습니다 — 시청에서 20km 를 넘습니다.
+   *
+   * rect 는 사각형이라 반경 제한이 없고, lib/region.ts 의 수도권 경계를
+   * 그대로 쓰면 "검색되는 곳 = 경로를 찾아줄 수 있는 곳" 이 됩니다.
+   * 형식: 좌측하단 경도,위도, 우측상단 경도,위도
+   */
+  const { minLat, maxLat, minLng, maxLng } = CAPITAL_AREA_BOUNDS;
+  url.searchParams.set("rect", `${minLng},${minLat},${maxLng},${maxLat}`);
 
   const started = Date.now();
 
@@ -68,9 +79,22 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
+      // 카카오는 400 과 함께 이유를 본문에 담아 보냅니다.
+      // 이걸 버리면 "왜 400 인지" 를 매번 추측하게 됩니다.
+      const body = await response.text().catch(() => "");
+      const reason = body.slice(0, 300);
+
+      log.error("카카오 장소 검색 오류", { status: response.status, body: reason });
       done({ status: response.status }, "error");
+
       return NextResponse.json(
-        { error: { message: "장소 검색에 실패했습니다." } },
+        {
+          error: {
+            message: "장소 검색에 실패했습니다.",
+            // 개발 중에만 원인을 화면까지 올려 보냅니다.
+            detail: process.env.NODE_ENV === "production" ? undefined : reason,
+          },
+        },
         { status: 502 },
       );
     }

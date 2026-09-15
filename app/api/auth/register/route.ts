@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { hashPassword, validatePassword, validateUsername } from "@/lib/password";
 import { SESSION_COOKIE, SESSION_MAX_AGE, serializeSession } from "@/lib/session";
+import {
+  CONSENT_ITEMS,
+  REQUIRED_CONSENTS,
+  consentField,
+  recordSignupConsents,
+  type ConsentType,
+} from "@/lib/consent";
+import { log } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -31,6 +39,16 @@ export async function POST(request: Request) {
   if (validatePassword(password)) return back(origin, "password");
   if (password !== passwordConfirm) return back(origin, "mismatch");
 
+  // 동의는 브라우저의 required 로 한 번, 여기서 다시 확인합니다.
+  // 브라우저 검사는 편의일 뿐 방어선이 아닙니다 — 폼은 얼마든지 조작됩니다.
+  const agreed = Object.fromEntries(
+    CONSENT_ITEMS.map((item) => [item.type, form.get(consentField(item.type)) !== null]),
+  ) as Record<ConsentType, boolean>;
+
+  if (REQUIRED_CONSENTS.some((item) => !agreed[item.type])) {
+    return back(origin, "consent");
+  }
+
   try {
     const passwordHash = await hashPassword(password);
 
@@ -40,6 +58,22 @@ export async function POST(request: Request) {
     );
 
     const userId = row.register_local_user;
+
+    // 동의 기록. 실패해도 가입은 되돌리지 않습니다 — 계정은 이미 만들어졌고,
+    // 여기서 예외를 던지면 사용자는 "가입 실패" 를 보지만 실제로는 계정이
+    // 생긴 상태가 됩니다. 대신 오류로 남겨 반드시 눈에 띄게 합니다.
+    try {
+      await recordSignupConsents(userId, agreed);
+      log.info("가입 동의 기록", {
+        userId,
+        marketing: agreed.marketing,
+      });
+    } catch (cause) {
+      log.error("가입 동의 기록 실패 — 계정은 생성됨", {
+        userId,
+        message: String(cause).slice(0, 200),
+      });
+    }
 
     const response = NextResponse.redirect(new URL("/", origin).toString(), 303);
     response.cookies.set(SESSION_COOKIE, serializeSession({ uid: userId, login: username }), {

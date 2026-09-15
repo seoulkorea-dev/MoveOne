@@ -16,7 +16,12 @@
 docker compose up -d                  # DB
 pnpm dev                              # http://localhost:4100
 pnpm test                             # vitest — API 키 없이 통과해야 정상
-docker compose exec -T db psql -U app -d moveone < db/schema.sql   # 스키마 반영
+docker compose exec -T db psql -U app -d moveone < db/schema.sql        # 스키마
+docker compose exec -T db psql -U app -d moveone < db/002_security.sql  # 보안 계층
+docker compose exec -T db psql -U app -d moveone < db/003_consent.sql   # 동의 기록
+
+./scripts/secure-init.sh              # 한 번만 — .gitignore·커밋 차단 훅·파일 권한
+./scripts/audit-secrets.sh            # 아무 때나 — 키가 샜는지 점검만
 ```
 
 ## 범위 — 1차에 하지 않는 것
@@ -60,6 +65,8 @@ docker compose exec -T db psql -U app -d moveone < db/schema.sql   # 스키마 �
   import하면 안 됩니다 (`lib/odsay/client.ts` 맨 위의 `import "server-only"`가 막습니다)
 - `NEXT_PUBLIC_KAKAO_JS_KEY` → 브라우저에 나가도 됩니다. 등록 도메인에서만 동작합니다
 - 브라우저가 ODsay를 직접 호출하는 코드를 절대 만들지 마세요
+- `.githooks/pre-commit` 이 비밀값 커밋을 막습니다. 일부러 넣은 값이면 그 줄 끝에
+  `# secret-ok` 를 붙이세요. 키 교체 절차와 배포 시 키 관리는 `docs/SECURITY-KEYS.md`
 
 ### 5. DB 접근은 `lib/db.ts`의 `query()`로만, 항상 `$1,$2` 바인딩
 
@@ -98,6 +105,8 @@ app/
   search/page.tsx             경로 검색 입력   + search-form.tsx (클라이언트)
   search/result/              경로 후보 목록   + result-view.tsx
   route/detail/               경로 상세·지도   + detail-view.tsx
+  legal/{terms,privacy}/      이용약관·개인정보 처리방침 (로그인 없이 열림)
+  wallet/                     패스·지갑 (결제수단 자리 — 아직 비어 있음)
   error/data/                 데이터 오류·오프라인
   api/transit/search/route.ts 경로 검색 프록시 — 지역판정→캐시→ODsay→정규화→기록
   api/transit/lane/route.ts   노선 선형 조회 (loadLane) — 상세에서만, 24시간 캐시
@@ -106,16 +115,19 @@ app/
   api/auth/                   register·login·logout·reset/{request,confirm}
 components/
   app-chrome.tsx              Shell·헤더·탭바·배너·폼 조각   ← 새 화면은 여기서 시작
-  route-map.tsx               카카오맵 (경로 상세에서만 로드)
+  route-map.tsx               카카오맵 (버스가 섞인 경로)
+  subway-map.tsx              ODsay 지하철 노선도 (지하철 전용 경로)
   icon.tsx                    Material Symbols
 lib/
   odsay/{types,client,normalize}.ts   ODsay 경계
   routes.ts                   도메인 타입·정렬·포매터   ← 가장 오래 살아남을 파일
   auth-guard.ts               requireSession / redirectIfSignedIn
   search-store.ts             화면 사이 결과 전달 (sessionStorage)
+  consent.ts                  약관 버전·동의 기록 읽기/쓰기
   cache.ts, region.ts, db.ts, session.ts, password.ts, kst.ts, mailer.ts
 types/kakao-maps.d.ts         카카오맵 SDK 최소 타입 선언
-db/schema.sql                 11개 테이블 · db/002_security.sql 보안 계층
+types/odsay-subway.d.ts       ODsay 노선도 SDK 최소 타입 선언
+db/schema.sql                 11개 테이블 · 002_security.sql 보안 · 003_consent.sql 동의
 fixtures/odsay/               응답 샘플. 테스트가 여기를 읽습니다
 ```
 
@@ -155,6 +167,75 @@ ODsay 가이드(lab.odsay.com/guide/guide#guideWeb_1)의 3단계를 그대로 �
 - `NEXT_PUBLIC_KAKAO_JS_KEY` 는 서버 컴포넌트(`app/route/detail/page.tsx`)에서 읽어
   props 로 내려보냅니다. 클라이언트 컴포넌트가 직접 `process.env` 를 읽지 않습니다
 
+## 지하철 노선도 — 지하철 전용 경로는 지도가 아니라 노선도
+
+ODsay 가 2026-05-28 에 **JavaScript 지하철 노선도 API** 를 추가했습니다
+(lab.odsay.com/guide/subwayMapDemo). 지하철만으로 가는 경로는 지리 지도보다
+노선도가 낫습니다 — 환승역이 한눈에 들어오고, 도로 위에 그려진 선을 보고
+헷갈릴 일이 없습니다.
+
+```js
+<script src="https://api.odsay.com/v1/api/subway/sdk.js?apiKey=…&callback=…">
+new odsay.maps.Subway(div, { lang: 0, CID: 1000 })   // CID 1000 = 수도권
+map.addMarker("s", 출발역ID)   // s=출발 m=경유 e=도착
+map.addMarker("e", 도착역ID)   // 둘 다 찍히면 노선도가 스스로 경로를 그립니다
+map.addEvent("path_changed", cb)
+```
+
+**키가 두 개입니다. 같은 값을 쓰면 한쪽이 반드시 실패합니다.**
+
+| 키 | 쓰는 곳 | 등록 방식 |
+| --- | --- | --- |
+| `ODSAY_API_KEY` | 서버 — 경로 검색·loadLane | Server 플랫폼 + 공인 IP |
+| `NEXT_PUBLIC_ODSAY_WEB_KEY` | 브라우저 — 노선도 SDK | Web 플랫폼 + 도메인 |
+
+- 역 ID 는 `subPath[].startID` / `endID` 입니다. `normalize.ts` 가 문자열로
+  보관하고 `components/subway-map.tsx` 가 숫자로 되돌립니다
+- 버스가 섞이면 노선도로 표현할 수 없으므로 카카오 지도를 씁니다.
+  판정은 `MapArea`(`app/route/detail/detail-view.tsx`) 에 있습니다
+- 노선도는 **자기 경로를 스스로 찾습니다.** 우리가 보여준
+  searchPubTransPathT 결과와 다를 수 있습니다. 다르면 `path_changed` 로그와
+  화면을 비교해 보세요
+
+## 화면 상태 — 효과 안에서 setState 하지 않습니다
+
+Next 16 의 `eslint-config-next` 는 React 컴파일러 규칙을 켭니다. 아래 두 가지가
+오류로 잡히므로, 새 화면을 만들 때 처음부터 이 방식으로 쓰세요.
+
+| 하지 말 것 | 대신 |
+| --- | --- |
+| `useEffect(() => setX(loadSearch()), [])` | `useStoredSearch()` / `useRecent()` (`lib/search-store.ts`) |
+| 렌더 본문에서 `Date.now()` | `useNow()` (`lib/use-now.ts`) |
+| 효과 안에서 곧바로 `setX(...)` 로 초기화 | `useState` 초기값, 또는 부모가 `key` 로 새로 시작 |
+
+`sessionStorage` 와 시계는 React 바깥의 외부 시스템입니다. 정식 도구는
+`useSyncExternalStore` 이고, 위 훅들이 그것을 감싼 것입니다. 스냅샷은 **값이
+같으면 참조도 같아야** 하므로 원문 문자열을 키로 캐시합니다. 이 캐시를 빼면
+렌더가 무한히 반복됩니다.
+
+저장소를 읽는 훅은 세 상태를 구분합니다 — `undefined`(아직 모름, 스켈레톤),
+`null`(없음, `/search` 로 되돌림), 값. 두 가지로 줄이면 결과가 있는데도
+"없음" 화면이 한 번 스칩니다.
+
+효과에는 **밖으로 내보내는 일**만 남깁니다 — 화면 이동, 로그, fetch.
+비동기 콜백 안의 `setState` 는 규칙에 걸리지 않습니다.
+
+## 약관 동의
+
+문서는 `app/legal/` 에 있고, **버전은 `lib/consent.ts` 의 상수**입니다.
+
+- 문서를 고치면 `TERMS_VERSION` / `PRIVACY_VERSION` 을 **반드시 같이 올리세요.**
+  올리지 않으면 바뀐 문서에 옛 동의가 붙어 있는 상태가 됩니다
+- 동의는 `user_consents` 에 **쌓입니다.** 덮어쓰거나 지우지 마세요 —
+  "언제 동의했고 언제 철회했는지" 가 이 테이블의 존재 이유입니다.
+  그래서 UPDATE·DELETE 정책을 일부러 만들지 않았습니다 (= 전면 차단)
+- 가입 시점에는 세션이 없어 RLS 를 통과할 수 없으므로
+  `record_user_consents()` (SECURITY DEFINER) 를 씁니다. 이 함수는 "가입 직후
+  10분 이내" 계정에만 익명 기록을 허용합니다
+- 처리방침 내용은 **실제 코드가 하는 일**과 맞춰 적혀 있습니다. 수집 컬럼이나
+  외부 연동(ODsay·카카오로 좌표·검색어가 나갑니다)을 바꾸면 문서도 고치세요
+- `<Blank>` 로 표시된 자리(보호책임자·사업자 정보)는 서비스 오픈 전 필수
+
 ## 로그
 
 `console.log` 를 직접 쓰지 마세요. `lib/logger.ts` 의 `log.debug / log.info / log.error`
@@ -176,7 +257,9 @@ ODsay 가이드(lab.odsay.com/guide/guide#guideWeb_1)의 3단계를 그대로 �
   개별 컨트롤에 `data-log="이름"` 을 붙이면 그 이름으로 찍힙니다
 - **입력값과 좌표는 찍지 않습니다.** 로거의 `redact()` 가 pass·token·session·
   auth·email 이 들어간 키를 자동으로 가리지만, 애초에 넘기지 않는 것이 맞습니다
-- `console` 사용은 ESLint 가 `lib/logger.ts` 에서만 허용합니다
+- `console` 사용은 ESLint 가 `lib/logger.ts` 와 `lib/mailer.ts` 에서만 허용합니다.
+  mailer 는 개발 모드에서 메일을 터미널에 상자 모양으로 찍는데, 비밀번호 재설정
+  링크를 눈으로 찾아 눌러야 해서 그 모양이 유지되어야 합니다
 
 ## 테스트
 

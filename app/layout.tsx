@@ -24,17 +24,17 @@ export default function RootLayout({
     <html lang="ko">
       <head>
         {/*
-          next/font 를 쓰지 않고 link 로 두는 이유:
-          Atkinson Hyperlegible Next 는 이름이 길고 변형이 잦아
-          next/font/google 의 타입 목록과 어긋나면 빌드가 통째로 깨집니다.
-          시안(Stitch code.html)도 같은 방식으로 불러옵니다.
+          본문 폰트는 내려받지 않습니다. 맑은 고딕은 Windows 기본 탑재이고,
+          다른 OS 는 각자의 시스템 한글 폰트로 내려갑니다(globals.css 의
+          --font-kr). 예전에 쓰던 Atkinson Hyperlegible Next / Barlow
+          Condensed / Noto Sans KR 스타일시트는 더 이상 참조하는 곳이 없어
+          지웠습니다 — 첫 화면이 그만큼 빨라집니다.
+
+          남은 것은 아이콘(Material Symbols) 하나뿐입니다. 이건 글자가 아니라
+          아이콘 글리프라 대체할 시스템 폰트가 없습니다.
         */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
-        />
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"

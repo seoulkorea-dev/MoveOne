@@ -8,7 +8,7 @@ import { Icon } from "./icon";
    여기 있는 것을 쓰고, 헤더나 탭바를 화면마다 다시 그리지 마세요.
    ============================================================ */
 
-export type TabKey = "home" | "search" | "saved" | "settings";
+export type TabKey = "home" | "search" | "wallet" | "my";
 
 /** 상단 헤더. back 을 주면 로고 대신 뒤로가기가 나옵니다. */
 export function AppHeader({
@@ -72,13 +72,12 @@ export function AppHeader({
   );
 }
 
+// 시안의 하단 4탭 그대로입니다.
 const TABS: { key: TabKey; icon: string; label: string; href: string }[] = [
-  { key: "home", icon: "directions_subway", label: "Home", href: "/" },
-  { key: "search", icon: "search", label: "Search", href: "/search" },
-  // 저장 경로와 설정은 1차 범위 밖입니다. 시안의 탭 구조를 유지하되
-  // 아직 화면이 없으므로 홈으로 보냅니다.
-  { key: "saved", icon: "bookmark", label: "Saved", href: "/" },
-  { key: "settings", icon: "settings", label: "Settings", href: "/" },
+  { key: "home", icon: "home", label: "홈", href: "/" },
+  { key: "search", icon: "alt_route", label: "길찾기", href: "/search" },
+  { key: "wallet", icon: "credit_card", label: "패스·지갑", href: "/wallet" },
+  { key: "my", icon: "person", label: "마이", href: "/account" },
 ];
 
 export function BottomNav({ active }: { active: TabKey }) {
@@ -97,9 +96,7 @@ export function BottomNav({ active }: { active: TabKey }) {
               }`}
             >
               <Icon name={tab.icon} size={24} />
-              <span className="font-label-md text-label-md tracking-wider uppercase">
-                {tab.label}
-              </span>
+              <span className="font-label-md text-label-md">{tab.label}</span>
             </Link>
           );
         })}

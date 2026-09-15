@@ -8,15 +8,10 @@
    달라서 참고만 했습니다. 실제로 렌더된 config 가 정본입니다.
 
    원본에서 고친 것은 두 가지뿐입니다.
-     1. 한글 폰트 스택(--font-kr) 추가.
-        Barlow Condensed 와 Atkinson Hyperlegible Next 는 라틴 전용이라
-        한글이 없습니다. 숫자·영문만 원본 폰트를 쓰고 한글은 폴백으로
-        내려가도록 스택 순서를 잡았습니다. 한글 1순위는 맑은 고딕입니다.
-
-        영문·숫자까지 전부 맑은 고딕으로 통일하고 싶으면, 아래 --font-*
-        정의에서 앞의 라틴 폰트 이름만 지우고 var(--font-kr) 만 남기세요.
-        단 --font-headline-xl 과 --font-code-time 은 큰 숫자(소요 시간)
-        자리라 Barlow Condensed 를 남겨두는 편이 시안에 가깝습니다.
+     1. 폰트를 맑은 고딕 한 스택(--font-kr)으로 통일.
+        시안의 Barlow Condensed / Atkinson Hyperlegible Next 는 라틴 전용이라
+        한글이 없습니다. 이 둘을 앞에 두면 한 줄 안에서 글자마다 폰트가
+        달라져 어색합니다. 크기와 줄간격도 한글 기준으로 다시 잡았습니다.
      2. rounded-full. 내보낸 config 에서 0.75rem 이었는데 v4 기본값
         (9999px)이 맞으므로 재정의하지 않습니다. 노선 배지가 여기 걸립니다.
 
@@ -89,84 +84,97 @@
   --color-alert: #d9381e;
   --color-ontime: #28a745;
 
-  /* ---------- 타이포 ---------- */
+  /* ---------- 타이포 ----------
 
-  /* 한글 스택. 앞의 라틴 폰트에 없는 글자만 여기로 내려옵니다.
-     맑은 고딕은 Windows 기본 탑재 폰트라 내려받지 않고 즉시 그려집니다
-     (라이선스상 웹폰트로 배포할 수 없어 시스템 폰트로만 씁니다).
-     맑은 고딕이 없는 기기를 위해 OS별 기본 한글 폰트를 뒤에 답니다 —
-     macOS·iOS는 Apple SD Gothic Neo, 그 외는 Noto Sans KR. */
-  --font-kr: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo",
+     한 스택으로 통일했습니다. 이전에는 라틴 폰트(Atkinson Hyperlegible Next,
+     Barlow Condensed)가 1순위고 한글만 폴백으로 내려갔는데, 한 줄 안에서
+     글자마다 폰트가 달라져 어색했습니다. 특히 Barlow Condensed 는 아주 좁고
+     Atkinson 은 아주 넓어서, 맑은 고딕과 섞이면 폭이 들쭉날쭉합니다.
+
+     맑은 고딕은 Windows 기본 탑재라 내려받지 않습니다. 없는 기기는
+     Arial(라틴) → Apple SD Gothic Neo(macOS/iOS) → Noto Sans KR 순으로
+     내려갑니다. CSS 폰트 폴백은 글자 단위라 자동으로 맞춰집니다.
+
+     크기는 한글 기준으로 다시 잡았습니다. 맑은 고딕은 같은 px 에서
+     Noto Sans KR 보다 작아 보이고, 한글은 줄간격이 넉넉해야 읽힙니다.
+     자간(letter-spacing)은 전부 0 입니다 — 한글 음절은 이미 자체 여백을
+     갖고 있어서 자간을 주면 글자가 흩어져 보입니다. */
+
+  --font-kr: "Malgun Gothic", "맑은 고딕", Arial, "Apple SD Gothic Neo",
     "Noto Sans KR", sans-serif;
 
-  --font-headline-xl: "Barlow Condensed", var(--font-kr);
-  --font-headline-xl-mobile: "Barlow Condensed", var(--font-kr);
-  --font-headline-lg: "Barlow Condensed", var(--font-kr);
-  --font-headline-md: "Barlow Condensed", var(--font-kr);
-  --font-headline-sm: "Barlow Condensed", var(--font-kr);
-  --font-code-time: "Barlow Condensed", var(--font-kr);
-  --font-body-lg: "Atkinson Hyperlegible Next", var(--font-kr);
-  --font-body-lg-bold: "Atkinson Hyperlegible Next", var(--font-kr);
-  --font-body-md: "Atkinson Hyperlegible Next", var(--font-kr);
-  --font-body-md-bold: "Atkinson Hyperlegible Next", var(--font-kr);
-  --font-label-lg: "Atkinson Hyperlegible Next", var(--font-kr);
-  --font-label-md: "Atkinson Hyperlegible Next", var(--font-kr);
+  --font-headline-xl: var(--font-kr);
+  --font-headline-xl-mobile: var(--font-kr);
+  --font-headline-lg: var(--font-kr);
+  --font-headline-md: var(--font-kr);
+  --font-headline-sm: var(--font-kr);
+  --font-code-time: var(--font-kr);
+  --font-body-lg: var(--font-kr);
+  --font-body-lg-bold: var(--font-kr);
+  --font-body-md: var(--font-kr);
+  --font-body-md-bold: var(--font-kr);
+  --font-label-lg: var(--font-kr);
+  --font-label-md: var(--font-kr);
+
+  /* 맑은 고딕에는 SemiBold(600)가 없습니다. 400 과 700 뿐이라
+     600 을 적으면 브라우저가 700 으로 올리거나 가짜로 굵게 만듭니다.
+     처음부터 700 으로 적어 둡니다. */
 
   --text-headline-xl: 40px;
-  --text-headline-xl--line-height: 44px;
-  --text-headline-xl--letter-spacing: 0.02em;
+  --text-headline-xl--line-height: 48px;
+  --text-headline-xl--letter-spacing: 0;
   --text-headline-xl--font-weight: 700;
 
   --text-headline-xl-mobile: 32px;
-  --text-headline-xl-mobile--line-height: 36px;
-  --text-headline-xl-mobile--letter-spacing: 0.02em;
+  --text-headline-xl-mobile--line-height: 40px;
+  --text-headline-xl-mobile--letter-spacing: 0;
   --text-headline-xl-mobile--font-weight: 700;
 
-  --text-headline-lg: 28px;
-  --text-headline-lg--line-height: 32px;
-  --text-headline-lg--letter-spacing: 0.01em;
+  --text-headline-lg: 26px;
+  --text-headline-lg--line-height: 36px;
+  --text-headline-lg--letter-spacing: 0;
   --text-headline-lg--font-weight: 700;
 
-  --text-headline-md: 22px;
-  --text-headline-md--line-height: 26px;
-  --text-headline-md--letter-spacing: 0.01em;
-  --text-headline-md--font-weight: 600;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--letter-spacing: 0;
+  --text-headline-md--font-weight: 700;
 
-  --text-headline-sm: 18px;
-  --text-headline-sm--line-height: 22px;
-  --text-headline-sm--letter-spacing: 0.02em;
-  --text-headline-sm--font-weight: 600;
+  --text-headline-sm: 17px;
+  --text-headline-sm--line-height: 24px;
+  --text-headline-sm--letter-spacing: 0;
+  --text-headline-sm--font-weight: 700;
 
   --text-body-lg: 16px;
-  --text-body-lg--line-height: 24px;
+  --text-body-lg--line-height: 26px;
   --text-body-lg--font-weight: 400;
 
   --text-body-lg-bold: 16px;
-  --text-body-lg-bold--line-height: 24px;
+  --text-body-lg-bold--line-height: 26px;
   --text-body-lg-bold--font-weight: 700;
 
-  --text-body-md: 14px;
-  --text-body-md--line-height: 20px;
+  --text-body-md: 15px;
+  --text-body-md--line-height: 24px;
   --text-body-md--font-weight: 400;
 
-  --text-body-md-bold: 14px;
-  --text-body-md-bold--line-height: 20px;
+  --text-body-md-bold: 15px;
+  --text-body-md-bold--line-height: 24px;
   --text-body-md-bold--font-weight: 700;
 
   --text-label-lg: 13px;
-  --text-label-lg--line-height: 16px;
-  --text-label-lg--letter-spacing: 0.04em;
+  --text-label-lg--line-height: 18px;
+  --text-label-lg--letter-spacing: 0;
   --text-label-lg--font-weight: 700;
 
-  --text-label-md: 11px;
-  --text-label-md--line-height: 14px;
-  --text-label-md--letter-spacing: 0.06em;
+  --text-label-md: 12px;
+  --text-label-md--line-height: 17px;
+  --text-label-md--letter-spacing: 0;
   --text-label-md--font-weight: 700;
 
   /* 도착 시각·소요시간처럼 숫자가 커야 하는 자리 */
   --text-code-time: 18px;
-  --text-code-time--line-height: 20px;
-  --text-code-time--letter-spacing: 0.04em;
+  --text-code-time--line-height: 22px;
+  --text-code-time--letter-spacing: 0;
   --text-code-time--font-weight: 700;
 
   /* ---------- 간격 ---------- */

@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# 비밀값이 커밋에 들어가는 것을 막습니다.
+#
+#   git config core.hooksPath .githooks     ← scripts/secure-init.sh 가 걸어줍니다
+#
+# 의존성이 없습니다. git 과 grep 만 씁니다. worktree 에서도 그대로 동작합니다.
+#
+# 통과시켜야 할 줄이 있으면 그 줄 끝에 `# secret-ok` 를 붙이세요.
+# `git commit --no-verify` 로 건너뛸 수도 있지만, 그러면 이 검사를 둔 의미가
+# 없습니다. 걸린 이유를 먼저 보세요.
+set -uo pipefail
+
+RED=$'\033[31m'; YEL=$'\033[33m'; OFF=$'\033[0m'
+fail=0
+
+note() { printf '%s차단%s %s\n' "$RED" "$OFF" "$1" >&2; fail=1; }
+
+# ── 1. 들어가면 안 되는 파일 ───────────────────────────────────────────
+while IFS= read -r path; do
+  base=$(basename "$path")
+  case "$base" in
+    *.example|*.sample|*.template) continue ;;
+  esac
+  case "$base" in
+    .env|.env.*)
+      note "$path — 비밀값 파일입니다. .env.local.example 에 키 이름만 두세요." ;;
+  esac
+  case "$base" in
+    *.bak-*)
+      note "$path — 패치 백업 파일입니다. 지우고 다시 커밋하세요." ;;
+  esac
+  case "$base" in
+    *.pem|*.key|*.p12|*.pfx|id_rsa|id_ed25519)
+      note "$path — 개인키로 보입니다." ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+# ── 2. 내용에 든 비밀값 ────────────────────────────────────────────────
+#
+# 오탐을 줄이려고 조건을 좁혔습니다. "비밀값스러운 이름" 과 "충분히 긴 값" 이
+# 둘 다 맞아야 걸립니다. lib/password.ts 의 DUMMY_HASH 같은 것은 통과합니다.
+scan() { # 설명 / 정규식
+  local label=$1 pattern=$2 hits
+  hits=$(git diff --cached --no-color -U0 -- . ':(exclude)*.example' ':(exclude)*.sample' \
+         | grep -E '^\+' | grep -v '^+++' | grep -v 'secret-ok' \
+         | grep -Ein "$pattern" || true)
+  [ -z "$hits" ] && return 0
+  note "$label"
+  printf '%s\n' "$hits" | head -5 | sed 's/^/       /' >&2
+}
+
+# 카카오 REST 호출 헤더에 박힌 키
+scan "카카오 REST 키가 코드에 들어 있습니다 (KakaoAK ...)" \
+     'KakaoAK[[:space:]]+[0-9a-f]{20,}'
+
+# 비밀값 이름 + 긴 리터럴
+scan "비밀값으로 보이는 리터럴이 있습니다" \
+     '(odsay|kakao|session|smtp|database|admin)[a-z_]*(key|secret|token|password|url)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9+/=_-]{16,}'
+
+# 접속 문자열 안의 비밀번호
+scan "접속 문자열에 비밀번호가 들어 있습니다" \
+     'postgres(ql)?://[^:[:space:]]+:[^@[:space:]]{6,}@'
+
+# 개인키 블록
+scan "개인키 블록이 있습니다" \
+     'BEGIN[[:space:]]+(RSA|EC|DSA|OPENSSH|PGP)?[[:space:]]*PRIVATE KEY'
+
+if [ "$fail" != "0" ]; then
+  cat >&2 <<MSG
+
+${YEL}커밋을 멈췄습니다.${OFF}
+  값은 .env.local 에만 두고, 코드에서는 process.env 로 읽으세요.
+  일부러 넣은 값이라면 그 줄 끝에 '# secret-ok' 를 붙이세요.
+MSG
+  exit 1
+fi
+
+exit 0

@@ -4,6 +4,7 @@ import { withUser } from "@/lib/db";
 import { formatKSTLong, relativeKo } from "@/lib/kst";
 import { Banner, BTN_SECONDARY, SectionTitle, Shell } from "@/components/app-chrome";
 import { Icon } from "@/components/icon";
+import { CONSENT_ITEMS, readConsents, type ConsentRecord } from "@/lib/consent";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,8 @@ export default async function AccountPage() {
       [session.uid],
     ),
   ).catch(() => [] as AccountRow[]);
+
+  const consents = await readConsents(session.uid).catch(() => [] as ConsentRecord[]);
 
   const me = rows[0];
 
@@ -90,6 +93,30 @@ export default async function AccountPage() {
         </Banner>
       )}
 
+      <SectionTitle>약관 동의</SectionTitle>
+
+      <section className="bg-surface-container-lowest rounded-xl divide-y divide-outline-variant/60 shadow-sm overflow-hidden">
+        {CONSENT_ITEMS.map((item) => {
+          const record = consents.find((row) => row.doc_type === item.type);
+          return (
+            <ConsentRow
+              key={item.type}
+              label={item.label}
+              required={item.required}
+              href={item.href}
+              record={record}
+            />
+          );
+        })}
+      </section>
+
+      {consents.length === 0 ? (
+        <Banner tone="info" icon="history" title="동의 기록이 없습니다">
+          이 기능이 생기기 전에 만든 계정입니다. 다음 접속 때 다시 동의를 받도록 하는
+          작업은 아직 붙이지 않았습니다.
+        </Banner>
+      ) : null}
+
       <SectionTitle>보안</SectionTitle>
 
       <Link href="/reset" className={BTN_SECONDARY}>
@@ -107,6 +134,58 @@ export default async function AccountPage() {
         </button>
       </form>
     </Shell>
+  );
+}
+
+/**
+ * 동의 한 줄. "언제" 가 이 화면의 핵심이라 시각을 굵게 보여줍니다.
+ * 기록이 없으면 "기록 없음" 이라고 솔직히 적습니다 — 동의한 것처럼
+ * 보이게 하면 안 됩니다.
+ */
+function ConsentRow({
+  label,
+  required,
+  href,
+  record,
+}: {
+  label: string;
+  required: boolean;
+  href?: string;
+  record?: ConsentRecord;
+}) {
+  const agreed = record?.agreed === true;
+
+  return (
+    <div className="flex items-start gap-space-sm p-space-base min-h-[44px]">
+      <Icon
+        name={agreed ? "check_circle" : record ? "cancel" : "help"}
+        size={20}
+        filled={agreed}
+        className={agreed ? "text-ontime mt-0.5" : record ? "text-error mt-0.5" : "text-outline mt-0.5"}
+      />
+      <div className="flex-1 min-w-0 flex flex-col gap-space-xxs">
+        <div className="flex flex-wrap items-center gap-x-1.5">
+          <span className="font-label-md text-label-md text-on-surface-variant">
+            {required ? "필수" : "선택"}
+          </span>
+          <span className="font-body-md text-body-md text-on-surface">{label}</span>
+        </div>
+        <span className="font-label-lg text-label-lg text-on-surface-variant tracking-normal">
+          {record
+            ? `${agreed ? "동의" : "철회"} · ${formatKSTLong(record.agreed_at)} · 버전 ${record.doc_version}`
+            : "기록 없음"}
+        </span>
+      </div>
+      {href ? (
+        <Link
+          href={href}
+          className="text-secondary font-label-lg text-label-lg shrink-0 underline underline-offset-2"
+          data-log={`account.consent.view`}
+        >
+          전문
+        </Link>
+      ) : null}
+    </div>
   );
 }
 

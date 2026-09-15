@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Banner, SectionTitle } from "@/components/app-chrome";
 import { RouteMap } from "@/components/route-map";
-import { loadSearch, type StoredSearch } from "@/lib/search-store";
+import { SubwayMap } from "@/components/subway-map";
+import { useStoredSearch } from "@/lib/search-store";
+import { useNow } from "@/lib/use-now";
 import { formatClockKST } from "@/lib/kst";
 import {
   SEGMENT_LABEL,
@@ -25,27 +27,34 @@ const SEGMENT_BG: Record<string, string> = {
   taxi: "bg-taxi",
 };
 
-export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
+export default function DetailView({
+  kakaoKey,
+  odsayWebKey,
+}: {
+  kakaoKey?: string;
+  odsayWebKey?: string;
+}) {
   const router = useRouter();
   const params = useSearchParams();
-  const [stored, setStored] = useState<StoredSearch | null | "empty">(null);
+  const stored = useStoredSearch();
+  const now = useNow();
 
   const index = Number(params.get("i"));
 
+  // 효과는 "밖으로 내보내는 일"만 합니다 — 화면 이동과 로그.
+  // 저장소를 읽어 state 에 퍼오는 일은 useStoredSearch 가 대신합니다.
   useEffect(() => {
-    const data = loadSearch();
-    if (!data) {
+    if (stored === undefined) return;
+    if (stored === null) {
       log.info("상세 — 결과 없음, 검색 화면으로 되돌림");
       router.replace("/search");
-      setStored("empty");
       return;
     }
     log.debug("상세 진입", { routeIndex: index, hasKakaoKey: !!kakaoKey });
-    setStored(data);
-  }, [router, index, kakaoKey]);
+  }, [stored, router, index, kakaoKey]);
 
-  if (stored === null) return <div className="skeleton h-64" aria-busy="true" />;
-  if (stored === "empty") return null;
+  if (stored === undefined) return <div className="skeleton h-64" aria-busy="true" />;
+  if (stored === null) return null;
 
   const route = stored.routes.find((r) => r.index === index);
   if (!route) {
@@ -61,7 +70,6 @@ export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
     );
   }
 
-  const now = Date.now();
   const arriveAt = now + route.totalTimeMin * 60_000;
 
   return (
@@ -74,7 +82,7 @@ export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
         arriveAt={arriveAt}
       />
 
-      <RouteMap segments={route.segments} mapObj={route.mapObj} appKey={kakaoKey} />
+      <MapArea route={route} kakaoKey={kakaoKey} odsayWebKey={odsayWebKey} />
 
       <SectionTitle>구간 안내</SectionTitle>
 
@@ -98,6 +106,98 @@ export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
       <div className="h-20" />
       <BottomCta />
     </>
+  );
+}
+
+/**
+ * 지도 자리.
+ *
+ * 지하철만으로 가는 경로는 **노선도**가 기본입니다. 지리 지도 위의 선은
+ * 실제 철로가 아니라 ODsay 가 준 좌표를 이은 것이라, 도로를 따라가는 것처럼
+ * 보일 때가 있습니다. 노선도는 그런 오해가 없고 환승역이 한눈에 들어옵니다.
+ *
+ * 버스가 섞이면 노선도로는 표현할 수 없으므로 지리 지도를 씁니다.
+ * 지하철 경로에서도 역까지 걸어가는 길이 궁금할 수 있어 전환 버튼을 둡니다.
+ */
+function MapArea({
+  route,
+  kakaoKey,
+  odsayWebKey,
+}: {
+  route: TransitRoute;
+  kakaoKey?: string;
+  odsayWebKey?: string;
+}) {
+  const rides = route.segments.filter((segment) => segment.type !== "walk");
+  const subwayOnly = rides.length > 0 && rides.every((segment) => segment.type === "subway");
+  const canUseSubwayMap = subwayOnly && !!odsayWebKey;
+
+  const [view, setView] = useState<"subway" | "geo">(canUseSubwayMap ? "subway" : "geo");
+
+  const first = rides[0];
+  const last = rides[rides.length - 1];
+
+  return (
+    <div className="flex flex-col gap-space-sm">
+      {canUseSubwayMap ? (
+        <div className="flex items-center gap-space-xxs bg-surface-container rounded-lg p-0.5 self-start">
+          <Toggle on={view === "subway"} onClick={() => setView("subway")} log="detail.view.subway">
+            노선도
+          </Toggle>
+          <Toggle on={view === "geo"} onClick={() => setView("geo")} log="detail.view.geo">
+            지도
+          </Toggle>
+        </div>
+      ) : null}
+
+      {canUseSubwayMap && view === "subway" ? (
+        <SubwayMap
+          key={`subway-${route.index}`}
+          startStationId={first?.odsayStartStationId}
+          endStationId={last?.odsayEndStationId}
+          startName={first?.startName}
+          endName={last?.endName}
+          apiKey={odsayWebKey}
+        />
+      ) : (
+        /* key 를 mapObj 로 두면 다른 경로로 바뀔 때 지도가 새로 시작합니다.
+           안에서 이전 선형을 지우는 코드를 둘 필요가 없어집니다. */
+        <RouteMap
+          key={route.mapObj ?? `route-${route.index}`}
+          segments={route.segments}
+          mapObj={route.mapObj}
+          appKey={kakaoKey}
+        />
+      )}
+    </div>
+  );
+}
+
+function Toggle({
+  on,
+  onClick,
+  log: logName,
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  log: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-log={logName}
+      aria-pressed={on}
+      className={`px-space-md py-1.5 rounded font-label-lg text-label-lg min-h-[36px] transition-colors ${
+        on
+          ? "bg-surface-container-lowest text-primary shadow-sm"
+          : "text-on-surface-variant hover:text-on-surface"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
