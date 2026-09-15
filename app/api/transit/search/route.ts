@@ -58,18 +58,8 @@ function isPlace(value: Partial<Place> | undefined): value is Place {
   );
 }
 
-function fail(message: string, status: number, code?: string, detail?: string) {
-  return NextResponse.json(
-    {
-      error: {
-        message,
-        code,
-        // 원인은 개발 중에만 화면까지 올려 보냅니다.
-        detail: process.env.NODE_ENV === "production" ? undefined : detail,
-      },
-    },
-    { status },
-  );
+function fail(message: string, status: number, code?: string) {
+  return NextResponse.json({ error: { message, code } }, { status });
 }
 
 export async function POST(request: Request) {
@@ -158,16 +148,9 @@ export async function POST(request: Request) {
         errorMessage: `${error.code}: ${error.message}`,
         userId,
       });
-      // ODsay 가 실제로 보낸 본문까지 남깁니다. 이게 없으면 code:'unknown' 만
-      // 보고 원인을 추측하게 됩니다.
-      log.error("ODsay 호출 실패", {
-        code: error.code,
-        status: error.status,
-        message: error.message,
-        detail: error.detail,
-      });
+      log.error("ODsay 호출 실패", { code: error.code, status: error.status });
       done({ code: error.code }, "error");
-      return fail(odsayErrorMessage(error), 502, error.code, error.detail);
+      return fail(odsayErrorMessage(error), 502, error.code);
     }
   }
 

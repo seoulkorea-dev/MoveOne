@@ -37,52 +37,11 @@ function num(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-/**
- * 소요시간·거리·정거장 수처럼 **음수가 될 수 없는** 값.
- *
- * ODsay 는 "모름" 을 -1 로 표현합니다 (실제 응답의 totalWalkTime: -1).
- * 그대로 두면 화면에 "-1분" 이 찍히고 진행 바 계산도 어긋납니다.
- * 0 은 정상값이라(환승 0회, 도보 0m) 음수만 걸러냅니다.
- */
-function nonNegative(value: unknown): number | undefined {
-  const parsed = num(value);
-  return parsed !== undefined && parsed >= 0 ? parsed : undefined;
-}
-
-/**
- * 좌표 하나를 숫자로. ODsay 는 정류장·선형 좌표를 문자열로 주기도 합니다.
- *
- * Number("") 가 NaN 이 아니라 **0** 이라는 점이 함정입니다. 빈 문자열을
- * 그냥 Number() 에 넣으면 (0, 0) — 기니만 앞바다 — 이 유효한 좌표로
- * 살아남아, 지도에 한국에서 아프리카까지 선이 그려집니다.
- */
-function coordNum(value: unknown): number | undefined {
-  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
-  if (typeof value !== "string") return undefined;
-
-  const trimmed = value.trim();
-  if (trimmed === "") return undefined;
-
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-/**
- * 위도·경도 쌍. 범위를 벗어나거나 (0, 0) 이면 버립니다.
- * 수도권 서비스에서 (0, 0) 은 어떤 경우에도 정상 값이 아닙니다.
- */
-function toPoint(lat: unknown, lng: unknown): { lat: number; lng: number } | null {
-  const y = coordNum(lat);
-  const x = coordNum(lng);
-  if (y === undefined || x === undefined) return null;
-  if (y < -90 || y > 90 || x < -180 || x > 180) return null;
-  if (y === 0 && x === 0) return null;
-  return { lat: y, lng: x };
-}
-
-/** 구간의 승·하차 지점. 같은 검증을 거칩니다. */
 function coord(lat: unknown, lng: unknown) {
-  return toPoint(lat, lng) ?? undefined;
+  const y = num(lat);
+  const x = num(lng);
+  if (y === undefined || x === undefined) return undefined;
+  return { lat: y, lng: x };
 }
 
 /**
@@ -97,8 +56,10 @@ function toStops(sub: OdsaySubPath): RouteStop[] | undefined {
 
   const stops = stations
     .map((station): RouteStop | null => {
-      const point = toPoint(station.y, station.x);
-      return point ? { name: station.stationName, ...point } : null;
+      const lat = Number(station.y);
+      const lng = Number(station.x);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      return { name: station.stationName, lat, lng };
     })
     .filter((stop): stop is RouteStop => stop !== null);
 
@@ -116,9 +77,9 @@ export function normalizeSegment(sub: OdsaySubPath, index: number): RouteSegment
     endName: sub.endName,
     start: coord(sub.startY, sub.startX),
     end: coord(sub.endY, sub.endX),
-    durationMin: nonNegative(sub.sectionTime),
-    distanceM: nonNegative(sub.distance),
-    stationCount: nonNegative(sub.stationCount),
+    durationMin: num(sub.sectionTime),
+    distanceM: num(sub.distance),
+    stationCount: num(sub.stationCount),
     stops: toStops(sub),
     // 숫자 ID를 문자열로 보관합니다. 기관마다 ID 형식이 달라
     // (공공데이터포털은 영문이 섞입니다) 문자열이 안전합니다.
@@ -138,11 +99,11 @@ export function normalizePath(path: OdsayPath, index: number): TransitRoute {
 
   return {
     index,
-    totalTimeMin: nonNegative(info.totalTime) ?? 0,
-    totalFare: nonNegative(info.payment) ?? null,
+    totalTimeMin: num(info.totalTime) ?? 0,
+    totalFare: num(info.payment) ?? null,
     transferCount,
-    totalWalkM: nonNegative(info.totalWalk) ?? 0,
-    totalDistanceM: nonNegative(info.totalDistance) ?? null,
+    totalWalkM: num(info.totalWalk) ?? 0,
+    totalDistanceM: num(info.totalDistance) ?? null,
     segments,
     odsayPathType: num(path.pathType),
     mapObj: typeof info.mapObj === "string" && info.mapObj.length > 0 ? info.mapObj : undefined,
@@ -176,7 +137,11 @@ export function normalizeLanes(response: OdsayLoadLaneResponse | undefined): Lan
   for (const lane of lanes) {
     for (const section of lane?.section ?? []) {
       const points = (section?.graphPos ?? [])
-        .map((pos) => toPoint(pos?.y, pos?.x))
+        .map((pos) => {
+          const lat = Number(pos?.y);
+          const lng = Number(pos?.x);
+          return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+        })
         .filter((point): point is { lat: number; lng: number } => point !== null);
 
       if (points.length >= 2) paths.push(points);

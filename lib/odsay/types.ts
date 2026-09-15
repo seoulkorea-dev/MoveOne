@@ -96,22 +96,6 @@ export type OdsaySearchPathResponse = {
   };
 };
 
-/**
- * ODsay 오류 본문.
- *
- * 문서에 한 가지 모양만 적혀 있지만 실제로는 객체로 올 때도 배열로 올 때도
- * 있고, 키 이름도 msg / message 가 섞입니다. 좁게 선언해 두면 코드가
- * 조용히 "unknown" 으로 뭉개서 원인을 못 찾습니다. 넓게 받고
- * client.ts 에서 정규화합니다.
- */
-export type OdsayErrorItem = {
-  code?: string | number;
-  msg?: string;
-  message?: string;
-};
-
-export type OdsayErrorBody = OdsayErrorItem | OdsayErrorItem[];
-
 /* ============================================================
    loadLane — 노선 그래픽 데이터
    searchPubTransPathT 가 준 info.mapObj 로 조회합니다.
@@ -140,5 +124,5 @@ export type OdsayLoadLaneResponse = {
     lane?: OdsayLaneGraphic[];
     boundary?: unknown;
   };
-  error?: OdsayErrorBody;
+  error?: { code?: string; msg?: string };
 };

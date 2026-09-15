@@ -1,10 +1,5 @@
 import "server-only";
-import { log } from "@/lib/logger";
-import type {
-  OdsayErrorBody,
-  OdsayLoadLaneResponse,
-  OdsaySearchPathResponse,
-} from "./types";
+import type { OdsayLoadLaneResponse, OdsaySearchPathResponse } from "./types";
 
 /**
  * ODsay 호출은 반드시 서버에서만 합니다.
@@ -22,80 +17,20 @@ export class OdsayError extends Error {
     readonly code: string,
     message: string,
     readonly status?: number,
-    /** ODsay 가 실제로 보낸 본문. 원인을 추측하지 않기 위해 남깁니다 */
-    readonly detail?: string,
   ) {
     super(message);
     this.name = "OdsayError";
   }
 }
 
-/**
- * ODsay 오류 본문을 코드·메시지로 정규화합니다.
- * 객체/배열, msg/message 가 섞여 오므로 한 곳에서 흡수합니다.
- */
-function toOdsayError(raw: unknown, status: number): OdsayError {
-  const first = Array.isArray(raw) ? raw[0] : raw;
-  const item = (first ?? {}) as Record<string, unknown>;
-
-  const code = item.code ?? item.errorCode ?? item.status;
-  const message = item.msg ?? item.message ?? item.errorMessage;
-
-  return new OdsayError(
-    code === undefined || code === null ? "unknown" : String(code),
-    typeof message === "string" && message ? message : "ODsay가 오류를 반환했습니다.",
-    status,
-    JSON.stringify(raw).slice(0, 400),
-  );
-}
-
-let keyShapeLogged = false;
-
-/**
- * ODsay API 키를 "보낼 수 있는 모양"으로 정리합니다.
- *
- * 여기서 두 가지를 흡수합니다. 둘 다 ApiKeyAuthFailed 로만 보여서
- * 원인을 찾기 어려운 함정입니다.
- *
- * 1. 앞뒤 공백·개행
- *    .env.local 을 Windows 편집기로 저장하면 줄 끝에 \r 이 남을 수 있고,
- *    값 끝의 공백도 그대로 키에 붙습니다.
- *
- * 2. 이미 URL 인코딩된 키
- *    ODsay 콘솔이 키를 인코딩된 형태(%2F, %2B …)로 보여주는 경우가 있습니다.
- *    그대로 두면 URLSearchParams 가 한 번 더 인코딩해서 %2F → %252F 가 되고
- *    인증이 깨집니다. %XX 패턴이 보이면 한 번 되돌립니다.
- */
 function apiKey(): string {
-  const raw = process.env.ODSAY_API_KEY?.trim();
-  if (!raw) {
+  const key = process.env.ODSAY_API_KEY;
+  if (!key) {
     throw new OdsayError(
       "config",
       "ODSAY_API_KEY가 설정되지 않았습니다. .env.local을 확인하세요.",
     );
   }
-
-  let key = raw;
-  if (/%[0-9A-Fa-f]{2}/.test(raw)) {
-    try {
-      key = decodeURIComponent(raw);
-    } catch {
-      // 잘못된 이스케이프면 원본을 그대로 씁니다.
-    }
-  }
-
-  // 키 값은 절대 남기지 않고 "모양"만 한 번 남깁니다.
-  // 인증이 실패할 때 길이나 공백 혼입을 먼저 의심할 수 있게 하려는 것입니다.
-  if (!keyShapeLogged) {
-    keyShapeLogged = true;
-    log.debug("ODsay 키 모양", {
-      length: key.length,
-      trimmed: raw.length !== (process.env.ODSAY_API_KEY?.length ?? 0),
-      wasUrlEncoded: key !== raw,
-      hasSpace: /\s/.test(key),
-    });
-  }
-
   return key;
 }
 
@@ -129,7 +64,7 @@ export type OdsayCallResult = {
  * ODsay는 HTTP 200에 error 필드를 실어 보내는 경우가 있어,
  * 상태 코드만 보고 성공으로 판단하면 안 됩니다.
  */
-async function callOdsay<T extends { error?: OdsayErrorBody }>(
+async function callOdsay<T extends { error?: { code?: string; msg?: string } }>(
   endpoint: string,
   params: Record<string, string>,
   options: { timeoutMs?: number } = {},
@@ -156,9 +91,13 @@ async function callOdsay<T extends { error?: OdsayErrorBody }>(
 
     if (data.error) {
       // 대표적인 코드:
-      //   -8   검색 반경 내 대중교통 정류장 없음
-      //   500  API 키 문제 (플랫폼 유형 불일치·IP 미등록 포함)
-      throw toOdsayError(data.error, response.status);
+      //   -8  검색 반경 내 대중교통 정류장 없음
+      //   500 API 키 문제 (플랫폼 유형 불일치 포함)
+      throw new OdsayError(
+        data.error.code ?? "unknown",
+        data.error.msg ?? "ODsay가 오류를 반환했습니다.",
+        response.status,
+      );
     }
 
     return { data, elapsedMs };

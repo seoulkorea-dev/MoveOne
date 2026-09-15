@@ -1,6 +1,5 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import type { Place, TransitRoute } from "./routes";
 
 /**
@@ -46,31 +45,9 @@ export type StoredSearch = {
   savedAt: number;
 };
 
-/* ---------------- 변경 알림 ----------------
- *
- * 브라우저의 `storage` 이벤트는 **다른 탭**에서 바뀔 때만 옵니다. 같은 탭에서
- * 우리가 직접 쓴 것은 알려주지 않으므로, 저장·삭제할 때 여기서 직접 알립니다.
- * 이 알림이 없으면 검색 직후 결과 화면이 예전 값을 봅니다.
- */
-const listeners = new Set<() => void>();
-
-function notify(): void {
-  for (const listener of listeners) listener();
-}
-
-function subscribe(onChange: () => void): () => void {
-  listeners.add(onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    listeners.delete(onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
 export function saveSearch(value: Omit<StoredSearch, "savedAt">): void {
   try {
     sessionStorage.setItem(KEY, JSON.stringify({ ...value, savedAt: Date.now() }));
-    notify();
   } catch {
     // 사생활 보호 모드 등에서 막힐 수 있습니다. 저장을 못 해도
     // 결과 화면은 이미 메모리에 값을 들고 있으므로 그대로 진행합니다.
@@ -97,50 +74,9 @@ export function loadSearch(): StoredSearch | null {
 export function clearSearch(): void {
   try {
     sessionStorage.removeItem(KEY);
-    notify();
   } catch {
     /* 무시 */
   }
-}
-
-/* ---------------- 화면에서 읽는 방법 ----------------
- *
- * sessionStorage 는 React 바깥의 외부 시스템입니다. `useEffect` 안에서
- * `setState(loadSearch())` 로 퍼오면 렌더가 한 번 더 도는 데다 React 가
- * 오류로 잡습니다(react-hooks/set-state-in-effect). 외부 시스템을 읽는
- * 정식 도구는 useSyncExternalStore 입니다.
- *
- * 주의: useSyncExternalStore 는 "값이 같으면 참조도 같을 것"을 요구합니다.
- * JSON.parse 는 부를 때마다 새 객체를 만들기 때문에, 원문 문자열을 키로
- * 삼아 캐시합니다. 이 캐시를 빼면 렌더가 무한히 반복됩니다.
- */
-
-let searchCache: { raw: string | null; value: StoredSearch | null } = { raw: null, value: null };
-
-function searchSnapshot(): StoredSearch | null {
-  let raw: string | null = null;
-  try {
-    raw = sessionStorage.getItem(KEY);
-  } catch {
-    raw = null;
-  }
-  if (raw !== searchCache.raw) {
-    searchCache = { raw, value: raw === null ? null : loadSearch() };
-  }
-  return searchCache.value;
-}
-
-/**
- * 저장된 검색 결과.
- *
- *   undefined — 아직 모름 (서버 렌더 / hydration 전). 스켈레톤을 보여주세요
- *   null      — 없음. 검색 화면으로 되돌리세요
- *   값        — 결과
- *
- * 세 상태를 구분하지 않으면 결과가 있는데도 "없음" 화면이 한 번 스칩니다.
- */
-export function useStoredSearch(): StoredSearch | null | undefined {
-  return useSyncExternalStore(subscribe, searchSnapshot, () => undefined);
 }
 
 /* ---------------- 최근 검색 ---------------- */
@@ -170,7 +106,6 @@ export function pushRecent(pair: RecentPair): void {
       ),
     ].slice(0, RECENT_MAX);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-    notify();
   } catch {
     /* 무시 */
   }
@@ -179,31 +114,7 @@ export function pushRecent(pair: RecentPair): void {
 export function clearRecent(): void {
   try {
     localStorage.removeItem(RECENT_KEY);
-    notify();
   } catch {
     /* 무시 */
   }
-}
-
-/** 서버 스냅샷은 매번 같은 배열이어야 합니다. 새 `[]` 를 돌려주면 무한 렌더입니다. */
-const NO_RECENT: RecentPair[] = [];
-
-let recentCache: { raw: string | null; value: RecentPair[] } = { raw: null, value: NO_RECENT };
-
-function recentSnapshot(): RecentPair[] {
-  let raw: string | null = null;
-  try {
-    raw = localStorage.getItem(RECENT_KEY);
-  } catch {
-    raw = null;
-  }
-  if (raw !== recentCache.raw) {
-    recentCache = { raw, value: raw === null ? NO_RECENT : loadRecent() };
-  }
-  return recentCache.value;
-}
-
-/** 최근 검색. 서버에서는 빈 배열입니다. */
-export function useRecent(): RecentPair[] {
-  return useSyncExternalStore(subscribe, recentSnapshot, () => NO_RECENT);
 }

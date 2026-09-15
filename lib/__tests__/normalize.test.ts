@@ -87,32 +87,6 @@ describe("normalizePaths — 방어", () => {
     expect(routes[0].segments[0].type).toBe("walk");
   });
 
-  it("ODsay 의 -1(모름)을 값으로 받지 않는다", () => {
-    // 실제 응답에 totalWalkTime: -1 이 옵니다. 그대로 두면 화면에 "-1분" 이 찍힙니다.
-    const routes = normalizePaths([
-      {
-        info: { totalTime: 16, totalWalk: -1, totalDistance: -1, payment: -1 },
-        subPath: [{ trafficType: 3, sectionTime: -1, distance: -1, stationCount: -1 }],
-      },
-    ]);
-    expect(routes[0].totalWalkM).toBe(0);
-    expect(routes[0].totalDistanceM).toBeNull();
-    expect(routes[0].totalFare).toBeNull();
-    expect(routes[0].segments[0].durationMin).toBeUndefined();
-    expect(routes[0].segments[0].distanceM).toBeUndefined();
-    expect(routes[0].segments[0].stationCount).toBeUndefined();
-  });
-
-  it("0 은 정상값이라 살린다", () => {
-    // 환승 0회, 도보 0m 는 "모름" 이 아닙니다.
-    const routes = normalizePaths([
-      { info: { totalTime: 10, totalWalk: 0, payment: 0 }, subPath: [{ trafficType: 1, sectionTime: 0 }] },
-    ]);
-    expect(routes[0].totalWalkM).toBe(0);
-    expect(routes[0].totalFare).toBe(0);
-    expect(routes[0].segments[0].durationMin).toBe(0);
-  });
-
   it("요금이 없으면 0이 아니라 null이다", () => {
     // 0원과 "모름"은 다릅니다. 화면에서 "요금 정보 없음"으로 표시됩니다.
     const routes = normalizePaths([{ info: { totalTime: 10 }, subPath: [] }]);
@@ -179,60 +153,6 @@ describe("정차역 정규화 — 방어", () => {
     ]);
     expect(routes[0].segments[0].stops).toBeUndefined();
   });
-
-  it("빈 문자열 좌표를 0으로 읽지 않는다", () => {
-    // Number("") 는 NaN 이 아니라 0 입니다. 그냥 Number() 를 쓰면
-    // (0, 0) — 기니만 앞바다 — 이 유효한 좌표로 살아남아,
-    // 지도에 한국에서 아프리카까지 선이 그려집니다.
-    const routes = normalizePaths([
-      {
-        info: { totalTime: 10 },
-        subPath: [
-          {
-            trafficType: 1,
-            passStopList: {
-              stations: [
-                { stationName: "빈값", x: "", y: "" },
-                { stationName: "공백", x: "  ", y: "  " },
-                { stationName: "정상", x: "127.0", y: "37.5" },
-              ],
-            },
-          },
-        ],
-      },
-    ]);
-    const stops = routes[0].segments[0].stops;
-    expect(stops).toHaveLength(1);
-    expect(stops![0].name).toBe("정상");
-  });
-
-  it("(0, 0) 과 범위 밖 좌표를 버린다", () => {
-    const routes = normalizePaths([
-      {
-        info: { totalTime: 10 },
-        subPath: [
-          {
-            trafficType: 1,
-            passStopList: {
-              stations: [
-                { stationName: "널섬", x: "0", y: "0" },
-                { stationName: "범위밖", x: "999", y: "999" },
-                { stationName: "정상", x: "127.0", y: "37.5" },
-              ],
-            },
-          },
-        ],
-      },
-    ]);
-    expect(routes[0].segments[0].stops).toHaveLength(1);
-  });
-
-  it("구간의 승·하차 지점도 (0, 0) 이면 버린다", () => {
-    const routes = normalizePaths([
-      { info: { totalTime: 10 }, subPath: [{ trafficType: 3, startX: 0, startY: 0 }] },
-    ]);
-    expect(routes[0].segments[0].start).toBeUndefined();
-  });
 });
 
 describe("normalizeLanes — 노선 선형", () => {
@@ -258,27 +178,6 @@ describe("normalizeLanes — 노선 선형", () => {
     expect(lanes).toHaveLength(1);
     expect(lanes[0][0]).toEqual({ lat: 37.4979, lng: 127.0276 });
     expect(lanes[0][1].lat).toBeCloseTo(37.3948, 4);
-  });
-
-  it("빈 문자열 좌표를 0으로 읽지 않는다", () => {
-    const lanes = normalizeLanes({
-      result: {
-        lane: [
-          {
-            section: [
-              {
-                graphPos: [
-                  { x: 127.0276, y: 37.4979 },
-                  { x: "", y: "" },
-                  { x: "127.1112", y: "37.3948" },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    });
-    expect(lanes[0]).toHaveLength(2);
   });
 
   it("점이 둘 미만인 구간은 버린다", () => {

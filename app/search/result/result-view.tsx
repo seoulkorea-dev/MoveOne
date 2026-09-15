@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { Banner } from "@/components/app-chrome";
-import { MODE_LABEL, useStoredSearch } from "@/lib/search-store";
+import { loadSearch, MODE_LABEL, type StoredSearch } from "@/lib/search-store";
 import { formatClockKST, formatKST } from "@/lib/kst";
-import { useNow } from "@/lib/use-now";
 import {
   SEGMENT_LABEL,
   SORT_LABEL,
@@ -34,30 +33,33 @@ const SEGMENT_BG: Record<string, string> = {
 
 export default function ResultView() {
   const router = useRouter();
-  const data = useStoredSearch();
+  const [data, setData] = useState<StoredSearch | null | "empty">(null);
   const [sortKey, setSortKey] = useState<RouteSortKey>("fastest");
 
-  // 효과는 "밖으로 내보내는 일"만 합니다 — 화면 이동과 로그.
-  // 저장소를 읽어 state 에 퍼오는 일은 useStoredSearch 가 대신합니다.
   useEffect(() => {
-    if (data === undefined) return;
-    if (data === null) {
+    const stored = loadSearch();
+    if (!stored) {
       // 다른 탭에서 링크를 열었거나 결과가 만료된 경우입니다.
       log.info("결과 없음 — 검색 화면으로 되돌림");
       router.replace("/search");
+      setData("empty");
       return;
     }
     log.debug("결과 불러옴", {
-      count: data.routes.length,
-      mode: data.mode,
-      fromCache: data.fromCache,
+      count: stored.routes.length,
+      mode: stored.mode,
+      fromCache: stored.fromCache,
     });
-  }, [data, router]);
+    setData(stored);
+  }, [router]);
 
-  const sorted = useMemo(() => (data ? sortRoutes(data.routes, sortKey) : []), [data, sortKey]);
+  const sorted = useMemo(
+    () => (data && data !== "empty" ? sortRoutes(data.routes, sortKey) : []),
+    [data, sortKey],
+  );
 
-  if (data === undefined) return <ResultSkeleton />;
-  if (data === null) return null;
+  if (data === null) return <ResultSkeleton />;
+  if (data === "empty") return null;
 
   return (
     <>
@@ -175,12 +177,12 @@ function RouteCard({
   searchId: string | null;
 }) {
   const router = useRouter();
-  const now = useNow();
 
   // 도보만으로 이루어진 구간 표시는 지저분하므로,
   // 짧은 도보(3분 이하)는 요약에서 생략합니다.
   const shown = route.segments.filter((s) => s.type !== "walk" || (s.durationMin ?? 0) > 3);
 
+  const now = Date.now();
   const arriveAt = now + route.totalTimeMin * 60_000;
 
   /** 상세로 들어가는 것이 곧 "선택"입니다. KPI 선택률의 유일한 근거입니다. */
