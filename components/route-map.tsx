@@ -2,34 +2,73 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./icon";
-import type { LanePath, RouteSegment } from "@/lib/routes";
+import type { LanePath, RouteSegment, RouteStop } from "@/lib/routes";
+import { MODE_COLOR, POINT_COLOR } from "@/lib/routing/line-colors";
 import { log } from "@/lib/logger";
 
 /* ============================================================
    경로 지도 (카카오맵 JS SDK)
 
-   ODsay 가이드의 3단계 구조를 그대로 따릅니다.
-     1) searchPubTransPathT  → 경로 후보 + info.mapObj   (검색 화면)
-     2) loadLane(mapObj)     → 실제 노선 선형 graphPos   (/api/transit/lane)
-     3) 카카오맵 Polyline    → 여기
+   그리는 것은 세 층입니다.
+     1) 선   — 탑승 구간은 노선색 실선, 도보는 회색 점선
+     2) 점   — 지나는 역·정류장. 환승 지점은 노랑
+     3) 라벨 — 승차·하차 지점의 이름, 그리고 출발·도착
 
-   데이터는 전부 ODsay 가 만들고, 카카오맵은 그리는 도구입니다.
+   좌표의 출처는 segment.stops 입니다.
+     지하철 → subway_station 마스터에서 역명으로 찾은 좌표
+     버스   → bus_route_stop 캐시(노선정보 API)의 정류장 좌표
+   ODsay 경로는 loadLane 선형이 있으면 그것을 먼저 씁니다.
 
    설계 원칙 하나: **지도는 없어도 되는 것으로 만듭니다.**
-   키가 없거나 SDK 가 막히거나 loadLane 이 실패해도 경로 상세 화면은
-   그대로 동작해야 합니다. 선형을 못 받으면 정차역을 이은 선으로 물러섭니다.
+   키가 없거나 SDK 가 막히거나 선형을 못 받아도 경로 상세 화면은
+   그대로 동작해야 합니다.
    ============================================================ */
 
 const SDK_TIMEOUT_MS = 8000;
 
-/** 구간 색. 카드·진행 바와 같은 값을 써야 눈으로 이어집니다. */
-const STROKE: Record<string, string> = {
-  walk: "#747784",
-  subway: "#0040a3",
-  bus: "#0068b7",
-  bike: "#a9641f",
-  taxi: "#a9641f",
-};
+/**
+ * 중간역 라벨을 붙일지 정하는 한계.
+ * 정류장이 많은 광역버스는 이름을 다 쓰면 지도가 글자로 덮입니다.
+ * 이 수를 넘으면 승·하차 지점만 이름을 답니다.
+ */
+const MAX_LABELS = 12;
+
+/** 실제로 서지 않는 지점. 선은 지나가지만 점·이름은 찍지 않습니다. */
+function isPassThrough(name: string | undefined): boolean {
+  return !!name && name.includes("미정차");
+}
+
+function colorOf(segment: RouteSegment): string {
+  return segment.color ?? MODE_COLOR[segment.type] ?? MODE_COLOR.subway;
+}
+
+/** 좌표를 비교용 열쇠로. 같은 지점인지 판단할 때 씁니다. */
+function keyOf(p: { lat: number; lng: number }): string {
+  return `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
+}
+
+/**
+ * 환승 지점의 좌표 열쇠 모음.
+ *
+ * 환승은 **탑승 구간과 탑승 구간이 맞닿는 곳**입니다. 도보 구간은 세지
+ * 않습니다 — 출발지에서 역까지 걷는 것은 환승이 아닙니다.
+ *
+ * 양쪽 끝을 모두 넣습니다.
+ *   지하철 — 내린 역과 탄 역이 같은 역이라 열쇠가 하나로 합쳐집니다
+ *   버스   — 내린 정류장과 탄 정류장이 다를 수 있어 둘 다 표시됩니다.
+ *            그 사이를 잇는 도보 점선이 이미 그려지므로, 두 노란 점이
+ *            "여기서 내려 저기서 타라" 를 그대로 보여줍니다.
+ */
+function transferKeys(rides: RouteSegment[]): Set<string> {
+  const keys = new Set<string>();
+  for (let i = 1; i < rides.length; i += 1) {
+    const alight = rides[i - 1].stops?.at(-1) ?? rides[i - 1].end;
+    const board = rides[i].stops?.[0] ?? rides[i].start;
+    if (alight) keys.add(keyOf(alight));
+    if (board) keys.add(keyOf(board));
+  }
+  return keys;
+}
 
 let sdkPromise: Promise<void> | null = null;
 
@@ -83,7 +122,7 @@ function loadKakaoSdk(appKey: string): Promise<void> {
   return sdkPromise;
 }
 
-/** 구간이 지나는 좌표열. 승차역 → 정차역들 → 하차역. 선형을 못 받았을 때의 대체. */
+/** 구간이 지나는 좌표열. 승차역 → 정차역들 → 하차역. */
 function pointsOf(segment: RouteSegment): LanePath {
   const points: LanePath = [];
   if (segment.start) points.push(segment.start);
@@ -114,12 +153,7 @@ export function RouteMap({
   const [status, setStatus] = useState<Status>(appKey ? "loading" : "no-key");
   const [lanes, setLanes] = useState<Lanes>(mapObj ? "pending" : null);
 
-  // ── 2단계: 노선 선형 받기 ──────────────────────────────────
-  //
-  // 초기값은 useState 에서 이미 정했습니다(mapObj 가 있으면 "pending").
-  // 여기서 다시 setLanes("pending") 을 부르면 효과 안에서 곧바로 state 를
-  // 바꾸는 것이라 렌더가 한 번 더 돕니다. mapObj 가 바뀔 때의 초기화는
-  // 부모가 <RouteMap key={mapObj}> 로 컴포넌트를 새로 시작시켜 해결합니다.
+  // ── 노선 선형 받기 (ODsay 경로에만 있습니다) ────────────────
   useEffect(() => {
     if (!mapObj) return;
     let cancelled = false;
@@ -148,7 +182,7 @@ export function RouteMap({
     };
   }, [mapObj]);
 
-  // ── 3단계: 지도에 그리기 ───────────────────────────────────
+  // ── 지도에 그리기 ──────────────────────────────────────────
   useEffect(() => {
     if (!appKey) {
       log.info("지도 건너뜀 — NEXT_PUBLIC_KAKAO_JS_KEY 없음");
@@ -175,11 +209,11 @@ export function RouteMap({
               // lane[i] 는 i 번째 탑승 구간에 대응합니다. 개수가 어긋나면
               // 색만 기본값이 되고 선은 그대로 그려집니다.
               path,
-              color: STROKE[rides[i]?.type ?? "subway"] ?? STROKE.subway,
+              color: rides[i] ? colorOf(rides[i]) : MODE_COLOR.subway,
             }))
           : rides.map((segment) => ({
               path: pointsOf(segment),
-              color: STROKE[segment.type] ?? STROKE.subway,
+              color: colorOf(segment),
             }));
 
         const walkPaths = walks.map((segment) => pointsOf(segment));
@@ -202,15 +236,24 @@ export function RouteMap({
         const bounds = new maps.LatLngBounds();
         const toLatLng = (p: { lat: number; lng: number }) => new maps.LatLng(p.lat, p.lng);
 
+        // ── 1층: 선 ──────────────────────────────────────────
         for (const { path, color } of ridePaths) {
           if (path.length < 2) continue;
           const latlngs = path.map(toLatLng);
           latlngs.forEach((ll) => bounds.extend(ll));
+          // 흰 테두리를 먼저 깔면 노선색이 지도 위에서 또렷해집니다.
+          new maps.Polyline({
+            path: latlngs,
+            strokeWeight: 10,
+            strokeColor: "#ffffff",
+            strokeOpacity: 0.9,
+            strokeStyle: "solid",
+          }).setMap(map);
           new maps.Polyline({
             path: latlngs,
             strokeWeight: 6,
             strokeColor: color,
-            strokeOpacity: 0.9,
+            strokeOpacity: 0.95,
             strokeStyle: "solid",
           }).setMap(map);
         }
@@ -222,28 +265,77 @@ export function RouteMap({
           new maps.Polyline({
             path: latlngs,
             strokeWeight: 4,
-            strokeColor: STROKE.walk,
+            strokeColor: MODE_COLOR.walk,
             strokeOpacity: 0.9,
             strokeStyle: "shortdash",
           }).setMap(map);
         }
 
-        // 출발·도착 표시. 전체 경로의 처음과 끝입니다.
+        // ── 2·3층: 역·정류장 점과 이름 ────────────────────────
+        //
+        // 이름을 전부 달면 정류장이 많은 광역버스에서 지도가 글자로 덮입니다.
+        // 그래서 승·하차 지점만 이름을 달고, 중간은 작은 점만 찍습니다.
+        // 구간이 적으면(MAX_LABELS 이하) 중간역 이름도 답니다.
+        const stopCount = rides.reduce((n, s) => n + (s.stops?.length ?? 0), 0);
+        const labelAll = stopCount <= MAX_LABELS;
+        const transfers = transferKeys(rides);
+        let dots = 0;
+        let transferDots = 0;
+
+        for (const segment of rides) {
+          const color = colorOf(segment);
+          const stops: RouteStop[] = segment.stops ?? [];
+
+          stops.forEach((stop, i) => {
+            if (isPassThrough(stop.name)) return;
+            const edge = i === 0 || i === stops.length - 1;
+            const position = toLatLng(stop);
+
+            if (transfers.has(keyOf(stop))) {
+              // 환승 지점. 노선색 대신 노랑으로 덮어씁니다 — 한 화면에서
+              // "갈아타는 곳" 이 색만으로 읽혀야 합니다.
+              new maps.CustomOverlay({
+                position,
+                content: transferMark(stop.name ?? ""),
+                map,
+                zIndex: 3,
+              });
+              transferDots += 1;
+            } else if (edge || labelAll) {
+              new maps.CustomOverlay({
+                position,
+                content: stationMark(color, stop.name ?? "", edge),
+                map,
+                zIndex: edge ? 2 : 1,
+              });
+            } else {
+              new maps.CustomOverlay({
+                position,
+                content: plainDot(color),
+                map,
+                zIndex: 1,
+              });
+            }
+            dots += 1;
+          });
+        }
+
+        // ── 출발·도착 ────────────────────────────────────────
         const head = pointsOf(segments[0])[0] ?? drawable[0][0];
         const lastSeg = pointsOf(segments[segments.length - 1]);
         const tail = lastSeg[lastSeg.length - 1] ?? drawable[drawable.length - 1].at(-1)!;
 
         new maps.CustomOverlay({
           position: toLatLng(head),
-          content: dot("#0266ff", "출발"),
+          content: endpoint(POINT_COLOR.start, "출발"),
           map,
-          zIndex: 3,
+          zIndex: 4,
         });
         new maps.CustomOverlay({
           position: toLatLng(tail),
-          content: dot("#002c74", "도착"),
+          content: endpoint(POINT_COLOR.end, "도착"),
           map,
-          zIndex: 3,
+          zIndex: 4,
         });
         bounds.extend(toLatLng(head));
         bounds.extend(toLatLng(tail));
@@ -255,7 +347,9 @@ export function RouteMap({
         log.info("지도 표시 완료", {
           source: usingLanes ? "loadLane 선형" : "정차역 좌표",
           lines: drawable.length,
-          points: drawable.reduce((n, p) => n + p.length, 0),
+          정류장: dots,
+          환승지점: transferDots,
+          이름표시: labelAll ? "전체" : "승하차만",
           elapsedMs: Date.now() - began,
         });
         setStatus("ready");
@@ -276,7 +370,7 @@ export function RouteMap({
     };
   }, [appKey, segments, lanes]);
 
-  const approximate = status === "ready" && lanes === null && !!mapObj;
+  const approximate = status === "ready" && lanes === null;
 
   return (
     <section
@@ -324,14 +418,82 @@ export function RouteMap({
   );
 }
 
-/** CustomOverlay 안에는 Tailwind 대신 인라인 스타일을 씁니다. */
-function dot(color: string, label: string): string {
+/* ------------------------------------------------------------------
+   CustomOverlay 안에는 Tailwind 가 닿지 않습니다. 인라인 스타일을 씁니다.
+   XSS 방지: 역명은 API 에서 온 문자열이므로 반드시 이스케이프합니다.
+   ------------------------------------------------------------------ */
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** 중간 정차역. 작은 점만 찍습니다. */
+function plainDot(color: string): string {
+  return (
+    `<span style="display:block;width:8px;height:8px;border-radius:9999px;` +
+    `background:#fff;border:2px solid ${color};transform:translate(-50%,-50%)"></span>`
+  );
+}
+
+/** 이름표. 어떤 마커든 같은 모양을 씁니다. */
+function chip(text: string, bold: boolean): string {
+  if (!text) return "";
+  return (
+    `<span style="background:rgba(255,255,255,.94);border:1px solid #c3c6d5;border-radius:4px;` +
+    `padding:1px 4px;font-size:11px;font-weight:${bold ? 700 : 500};color:#191c1f;` +
+    `white-space:nowrap">${escapeHtml(text)}</span>`
+  );
+}
+
+/**
+ * 점 둘레의 그림자.
+ *
+ * 흰 테두리만 두면 밝은 색(민트·노랑)이 지도의 흰 배경에 묻힙니다.
+ * 바깥에 얇은 검은 링을 하나 더 둘러 어떤 색이든 윤곽이 남게 합니다.
+ */
+const RING = "box-shadow:0 0 0 1px rgba(25,28,31,.28),0 1px 3px rgba(25,28,31,.35)";
+
+/** 승차·하차 지점. 큰 점에 이름을 답니다. */
+function stationMark(color: string, name: string, emphasize: boolean): string {
+  const size = emphasize ? 12 : 8;
+  const border = emphasize ? 3 : 2;
+  const dot =
+    `<span style="width:${size}px;height:${size}px;border-radius:9999px;background:#fff;` +
+    `border:${border}px solid ${color};box-shadow:0 1px 2px rgba(25,28,31,.3);flex:none"></span>`;
+  return (
+    `<div style="display:flex;align-items:center;gap:3px;transform:translate(-50%,-50%)">` +
+    `${dot}${chip(name, emphasize)}</div>`
+  );
+}
+
+/**
+ * 환승 지점.
+ *
+ * 노란 점 안을 채우고(테두리만 두른 역 마커와 구분됩니다) 이름표에
+ * "환승" 을 붙입니다. 색맹이신 분에게는 색만으로 구분이 안 되므로,
+ * 글자가 같이 있어야 합니다.
+ */
+function transferMark(name: string): string {
+  const dot =
+    `<span style="width:13px;height:13px;border-radius:9999px;background:${POINT_COLOR.transfer};` +
+    `border:2.5px solid #fff;${RING};flex:none"></span>`;
+  const text = name ? `${name} 환승` : "환승";
+  return (
+    `<div style="display:flex;align-items:center;gap:3px;transform:translate(-50%,-50%)">` +
+    `${dot}${chip(text, true)}</div>`
+  );
+}
+
+/** 출발·도착 표시. */
+function endpoint(color: string, label: string): string {
   return (
     `<div style="display:flex;align-items:center;gap:4px;transform:translate(-50%,-50%)">` +
-    `<span style="width:14px;height:14px;border-radius:9999px;background:${color};` +
-    `border:3px solid #fff;box-shadow:0 1px 3px rgba(25,28,31,.4)"></span>` +
-    `<span style="background:#fff;border:1px solid #c3c6d5;border-radius:4px;padding:1px 5px;` +
-    `font-size:11px;font-weight:700;color:#191c1f;white-space:nowrap">${label}</span>` +
-    `</div>`
+    `<span style="width:15px;height:15px;border-radius:9999px;background:${color};` +
+    `border:3px solid #fff;${RING};flex:none"></span>` +
+    `${chip(label, true)}</div>`
   );
 }

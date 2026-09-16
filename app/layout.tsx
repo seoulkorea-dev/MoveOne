@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import { ActionLogger } from "@/components/action-logger";
+import { pretendard } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,17 +22,16 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="ko">
+    // pretendard.variable 이 이 요소에 --font-pretendard 를 심습니다.
+    // globals.css 의 --font-kr 이 그 값을 씁니다. html 에 붙이는 이유는
+    // @theme 가 :root 에 토큰을 내보내기 때문입니다 — 같은 요소여야
+    // 변수가 서로 보입니다.
+    <html lang="ko" className={pretendard.variable}>
       <head>
         {/*
-          본문 폰트는 내려받지 않습니다. 맑은 고딕은 Windows 기본 탑재이고,
-          다른 OS 는 각자의 시스템 한글 폰트로 내려갑니다(globals.css 의
-          --font-kr). 예전에 쓰던 Atkinson Hyperlegible Next / Barlow
-          Condensed / Noto Sans KR 스타일시트는 더 이상 참조하는 곳이 없어
-          지웠습니다 — 첫 화면이 그만큼 빨라집니다.
-
-          남은 것은 아이콘(Material Symbols) 하나뿐입니다. 이건 글자가 아니라
-          아이콘 글리프라 대체할 시스템 폰트가 없습니다.
+          본문 폰트는 app/fonts.ts 에서 next/font/local 로 처리합니다.
+          여기 남은 것은 아이콘(Material Symbols) 하나뿐입니다. 이건 글자가
+          아니라 아이콘 글리프라 대체할 시스템 폰트가 없습니다.
         */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

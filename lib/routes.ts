@@ -59,6 +59,17 @@ export type RouteSegment = {
    * 곡선이 필요해지면 ODsay loadLane(mapObj) 을 붙입니다.
    */
   stops?: RouteStop[];
+  /**
+   * 이 구간을 그릴 색 (#RRGGBB).
+   *
+   * 노선 유형을 아는 쪽은 어댑터입니다 — 버스는 TOPIS routeType,
+   * 지하철은 경로 API 의 노선명. 화면이 노선명을 보고 색을 고르게 하면
+   * 엔진이 늘어날 때마다 화면에 규칙이 쌓입니다. 그래서 어댑터가 정해
+   * 여기에 담고, 지도와 진행 바는 그대로 씁니다.
+   *
+   * 없으면(옛 캐시 데이터) 이동수단 기본색으로 물러섭니다.
+   */
+  color?: string;
   /** 2차에서 실시간 도착정보를 붙일 때 쓰는 열쇠 */
   odsayStartStationId?: string;
   odsayEndStationId?: string;
