@@ -20,6 +20,16 @@ const CHIP_ON = `${CHIP_BASE} bg-primary-container text-on-primary shadow-sm`;
 const CHIP_OFF = `${CHIP_BASE} bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm`;
 const CHIP_DISABLED = `${CHIP_BASE} bg-surface-container-low text-outline cursor-not-allowed`;
 
+/** 오류 페이지로 보내지 않고 화면에 안내만 띄울 코드들 */
+const NOTICE_CODES = [
+  "out_of_service_area",
+  "subway_no_route",
+  "subway_no_station",
+  // 서울시 버스 API 가 "경로가 존재하지 않습니다"(headerCd 4)로 답한 경우.
+  // 오류가 아니라 그 구간에 버스 경로가 없다는 사실입니다.
+  "bus_no_route",
+];
+
 const MODES: { key: SearchMode; label: string; icon: string }[] = [
   { key: "all", label: "전체", icon: "commute" },
   { key: "subway", label: "지하철", icon: "subway" },
@@ -42,6 +52,8 @@ export default function SearchForm() {
   const recent = useRecent();
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  /** 지하철로 못 찾았을 때 '전체로 다시 검색' 버튼을 보일지 */
+  const [retryAll, setRetryAll] = useState(false);
 
   const canSearch = departure !== null && arrival !== null && !loading;
 
@@ -49,6 +61,7 @@ export default function SearchForm() {
     async (from: Place, to: Place, searchMode: SearchMode) => {
       setLoading(true);
       setNotice(null);
+      setRetryAll(false);
       // 좌표는 위치 정보라 로그에 남기지 않습니다. 이름과 수단만 남깁니다.
       log.info("경로 검색 요청", {
         from: from.name ?? from.address,
@@ -66,10 +79,18 @@ export default function SearchForm() {
         const data = await response.json();
 
         if (!response.ok) {
-          // 수도권 밖은 오류가 아니라 안내입니다. 화면을 떠나지 않습니다.
-          if (data?.error?.code === "out_of_service_area") {
-            log.info("수도권 밖 안내", { code: data.error.code });
-            setNotice(data.error.message ?? "현재 수도권만 지원합니다.");
+          // 오류가 아니라 안내로 끝낼 코드들. 화면을 떠나지 않습니다.
+          //   out_of_service_area — 수도권 밖
+          //   subway_no_route     — 이 구간은 지하철로 갈 수 없음
+          //                         (공공 API 가 성공 코드에 빈 경로를 준 경우)
+          //   subway_no_station   — 출발·도착지 근처에 지하철역이 없음
+          const code = data?.error?.code as string | undefined;
+          if (NOTICE_CODES.includes(code ?? "")) {
+            log.info("검색 안내", { code, mode: searchMode });
+            setNotice(data.error?.message ?? "이 구간은 검색할 수 없습니다.");
+            // '전체'가 아닌 수단에서 못 찾았을 때만 넓혀볼 수 있습니다.
+            // '전체'에서 실패하면 더 넓힐 곳이 없어 버튼이 의미가 없습니다.
+            setRetryAll(searchMode !== "all" && code !== "out_of_service_area");
             setLoading(false);
             return;
           }
@@ -162,6 +183,24 @@ export default function SearchForm() {
         <Banner tone="info" icon="map" title="이 구간은 아직 검색할 수 없습니다">
           {notice}
         </Banner>
+      ) : null}
+
+      {/* 지하철로 못 찾은 경우에만. Banner 밖에 두는 이유는 Banner 가 본문을
+          문단으로 감쌀 수 있어서입니다 — 문단 안의 버튼은 올바른 마크업이 아닙니다. */}
+      {notice && retryAll && departure && arrival ? (
+        <button
+          type="button"
+          data-log="search.retry.all"
+          onClick={() => {
+            log.debug("전체로 다시 검색");
+            setMode("all");
+            void runSearch(departure, arrival, "all");
+          }}
+          className="self-start inline-flex items-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container-lowest text-primary font-label-lg text-label-lg shadow-sm min-h-[36px]"
+        >
+          <Icon name="commute" size={16} />
+          전체로 다시 검색
+        </button>
       ) : null}
 
       {/* 출발 시각 — 1차는 '지금 출발'만 지원합니다 */}
