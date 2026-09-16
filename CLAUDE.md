@@ -13,8 +13,9 @@
 ## 명령
 
 ```bash
-docker compose up -d                  # DB
-pnpm dev                              # http://localhost:4100
+./scripts/start.sh                    # DB 확인 + 개발 서버 (http://localhost:4100)
+./scripts/shutdown.sh                 # Ctrl-C 로 안 죽었을 때
+./scripts/shutdown.sh --all --db      # 리포의 남은 node + DB 까지
 pnpm test                             # vitest — API 키 없이 통과해야 정상
 docker compose exec -T db psql -U app -d moveone < db/schema.sql        # 스키마
 docker compose exec -T db psql -U app -d moveone < db/002_security.sql  # 보안 계층
@@ -23,6 +24,11 @@ docker compose exec -T db psql -U app -d moveone < db/003_consent.sql   # 동의
 ./scripts/secure-init.sh              # 한 번만 — .gitignore·커밋 차단 훅·파일 권한
 ./scripts/audit-secrets.sh            # 아무 때나 — 키가 샜는지 점검만
 ```
+
+`pnpm dev` 대신 `./scripts/start.sh` 를 쓰세요. WSL + Turbopack 에서 Ctrl-C 가
+Next 를 못 죽이고 포트 4100 이 물린 채 남는 일이 있습니다. start.sh 는 Ctrl-C 를
+직접 받아 **프로세스 트리 전체**를 정리하고, 그래도 안 풀리면 포트를 잡은
+프로세스를 찾아 끝냅니다. 뜰 때도 남아 있는 프로세스를 먼저 치웁니다.
 
 ## 범위 — 1차에 하지 않는 것
 
