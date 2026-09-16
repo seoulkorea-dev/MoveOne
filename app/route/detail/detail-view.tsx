@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Banner, SectionTitle } from "@/components/app-chrome";
 import { RouteMap } from "@/components/route-map";
-import { SubwayMap } from "@/components/subway-map";
 import { useStoredSearch } from "@/lib/search-store";
 import { useNow } from "@/lib/use-now";
 import { formatClockKST } from "@/lib/kst";
@@ -17,23 +16,22 @@ import {
   type RouteSegment,
   type TransitRoute,
 } from "@/lib/routes";
+import { MODE_COLOR } from "@/lib/routing/line-colors";
 import { log } from "@/lib/logger";
 
-const SEGMENT_BG: Record<string, string> = {
-  walk: "bg-walk",
-  subway: "bg-subway",
-  bus: "bg-bus",
-  bike: "bg-bike",
-  taxi: "bg-taxi",
-};
+/**
+ * 구간 색.
+ *
+ * 예전에는 이동수단별 Tailwind 클래스(bg-subway 등) 하나씩이었습니다.
+ * 이제 어댑터가 노선별 실제 색을 segment.color 에 담아 주므로,
+ * 지도와 같은 값을 그대로 씁니다. 1호선과 4호선이 진행 바에서도 구분됩니다.
+ * color 가 없는 옛 캐시 데이터를 위해 이동수단 기본색으로 물러섭니다.
+ */
+function segmentColor(segment: RouteSegment): string {
+  return segment.color ?? MODE_COLOR[segment.type] ?? MODE_COLOR.walk;
+}
 
-export default function DetailView({
-  kakaoKey,
-  odsayWebKey,
-}: {
-  kakaoKey?: string;
-  odsayWebKey?: string;
-}) {
+export default function DetailView({ kakaoKey }: { kakaoKey?: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const stored = useStoredSearch();
@@ -82,7 +80,7 @@ export default function DetailView({
         arriveAt={arriveAt}
       />
 
-      <MapArea route={route} kakaoKey={kakaoKey} odsayWebKey={odsayWebKey} />
+      <MapArea route={route} kakaoKey={kakaoKey} />
 
       <SectionTitle>구간 안내</SectionTitle>
 
@@ -112,92 +110,25 @@ export default function DetailView({
 /**
  * 지도 자리.
  *
- * 지하철만으로 가는 경로는 **노선도**가 기본입니다. 지리 지도 위의 선은
- * 실제 철로가 아니라 ODsay 가 준 좌표를 이은 것이라, 도로를 따라가는 것처럼
- * 보일 때가 있습니다. 노선도는 그런 오해가 없고 환승역이 한눈에 들어옵니다.
+ * 예전에는 지하철 전용 경로에 ODsay 노선도 위젯을 띄우고 지리 지도와
+ * 전환할 수 있게 했습니다. 그 위젯은 ODsay 역 ID 가 있어야 그리는데,
+ * 서울시 공공 API 로 찾은 경로에는 그 ID 가 없습니다(ODsay 전용 값).
+ * 그래서 지하철 경로에서 지도 자리가 통째로 비었습니다.
  *
- * 버스가 섞이면 노선도로는 표현할 수 없으므로 지리 지도를 씁니다.
- * 지하철 경로에서도 역까지 걸어가는 길이 궁금할 수 있어 전환 버튼을 둡니다.
+ * 지금은 모든 경로를 카카오 지도 하나로 그립니다. 노선색·역 이름까지
+ * 나오고, 도보와 버스 구간이 한 화면에서 이어집니다. 노선도로는 표현할
+ * 수 없던 것들입니다.
  */
-function MapArea({
-  route,
-  kakaoKey,
-  odsayWebKey,
-}: {
-  route: TransitRoute;
-  kakaoKey?: string;
-  odsayWebKey?: string;
-}) {
-  const rides = route.segments.filter((segment) => segment.type !== "walk");
-  const subwayOnly = rides.length > 0 && rides.every((segment) => segment.type === "subway");
-  const canUseSubwayMap = subwayOnly && !!odsayWebKey;
-
-  const [view, setView] = useState<"subway" | "geo">(canUseSubwayMap ? "subway" : "geo");
-
-  const first = rides[0];
-  const last = rides[rides.length - 1];
-
+function MapArea({ route, kakaoKey }: { route: TransitRoute; kakaoKey?: string }) {
   return (
-    <div className="flex flex-col gap-space-sm">
-      {canUseSubwayMap ? (
-        <div className="flex items-center gap-space-xxs bg-surface-container rounded-lg p-0.5 self-start">
-          <Toggle on={view === "subway"} onClick={() => setView("subway")} log="detail.view.subway">
-            노선도
-          </Toggle>
-          <Toggle on={view === "geo"} onClick={() => setView("geo")} log="detail.view.geo">
-            지도
-          </Toggle>
-        </div>
-      ) : null}
-
-      {canUseSubwayMap && view === "subway" ? (
-        <SubwayMap
-          key={`subway-${route.index}`}
-          startStationId={first?.odsayStartStationId}
-          endStationId={last?.odsayEndStationId}
-          startName={first?.startName}
-          endName={last?.endName}
-          apiKey={odsayWebKey}
-        />
-      ) : (
-        /* key 를 mapObj 로 두면 다른 경로로 바뀔 때 지도가 새로 시작합니다.
-           안에서 이전 선형을 지우는 코드를 둘 필요가 없어집니다. */
-        <RouteMap
-          key={route.mapObj ?? `route-${route.index}`}
-          segments={route.segments}
-          mapObj={route.mapObj}
-          appKey={kakaoKey}
-        />
-      )}
-    </div>
-  );
-}
-
-function Toggle({
-  on,
-  onClick,
-  log: logName,
-  children,
-}: {
-  on: boolean;
-  onClick: () => void;
-  log: string;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      data-log={logName}
-      aria-pressed={on}
-      className={`px-space-md py-1.5 rounded font-label-lg text-label-lg min-h-[36px] transition-colors ${
-        on
-          ? "bg-surface-container-lowest text-primary shadow-sm"
-          : "text-on-surface-variant hover:text-on-surface"
-      }`}
-    >
-      {children}
-    </button>
+    /* key 를 두는 이유: 다른 경로로 바뀔 때 지도가 새로 시작합니다.
+       안에서 이전 선형을 지우는 코드를 둘 필요가 없어집니다. */
+    <RouteMap
+      key={route.mapObj ?? `route-${route.index}`}
+      segments={route.segments}
+      mapObj={route.mapObj}
+      appKey={kakaoKey}
+    />
   );
 }
 
@@ -273,8 +204,11 @@ function Summary({
         {route.segments.map((segment) => (
           <div
             key={segment.index}
-            className={`h-full ${SEGMENT_BG[segment.type] ?? "bg-outline-variant"}`}
-            style={{ width: `${Math.max(2, Math.round(((segment.durationMin ?? 0) / safeTotal) * 100))}%` }}
+            className="h-full"
+            style={{
+              width: `${Math.max(2, Math.round(((segment.durationMin ?? 0) / safeTotal) * 100))}%`,
+              backgroundColor: segmentColor(segment),
+            }}
           />
         ))}
       </div>
@@ -298,16 +232,26 @@ function Step({ segment, last }: { segment: RouteSegment; last: boolean }) {
     : `${segment.laneName ?? SEGMENT_LABEL[segment.type]}${segment.startName ? ` ${segment.startName} 승차` : ""}`;
 
   // 승차역·하차역을 뺀 중간 정차역. 시안의 "양재 → 양재시민의숲 → …" 자리입니다.
+  //
+  // "(미정차)" 가 붙은 지점은 뺍니다. 버스 노선 데이터에는 판교TG·양재IC 처럼
+  // 실제로 서지 않는 지점이 들어 있습니다. 지도에 선을 그릴 때는 필요하지만
+  // "여기 선다" 는 목록에 섞이면 안 됩니다.
   const middle = (segment.stops ?? [])
     .slice(1, -1)
     .map((stop) => stop.name)
-    .filter((name): name is string => !!name);
+    .filter((name): name is string => !!name && !name.includes("미정차"));
 
   const sub = isWalk
     ? segment.distanceM !== undefined
       ? formatDistance(segment.distanceM)
       : ""
-    : [segment.endName ? `${segment.endName} 하차` : "", segment.stationCount ? `${segment.stationCount}개 역` : ""]
+    : [
+        segment.endName ? `${segment.endName} 하차` : "",
+        // 버스는 '역' 이 아니라 '정류장' 입니다.
+        segment.stationCount
+          ? `${segment.stationCount}개 ${segment.type === "bus" ? "정류장" : "역"}`
+          : "",
+      ]
         .filter(Boolean)
         .join(" · ");
 
@@ -324,9 +268,8 @@ function Step({ segment, last }: { segment: RouteSegment; last: boolean }) {
               <Icon name="directions_walk" size={18} className="text-outline" />
             ) : (
               <span
-                className={`w-5 h-5 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0 ${
-                  SEGMENT_BG[segment.type] ?? "bg-outline"
-                }`}
+                className="w-5 h-5 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0"
+                style={{ backgroundColor: segmentColor(segment) }}
               >
                 {SEGMENT_LABEL[segment.type].slice(0, 1)}
               </span>

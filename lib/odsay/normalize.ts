@@ -1,4 +1,5 @@
 import type { LanePath, RouteSegment, RouteStop, SegmentType, TransitRoute } from "@/lib/routes";
+import { MODE_COLOR, subwayColor } from "@/lib/routing/line-colors";
 import {
   ODSAY_TRAFFIC_TYPE,
   type OdsayLoadLaneResponse,
@@ -107,11 +108,16 @@ function toStops(sub: OdsaySubPath): RouteStop[] | undefined {
 
 export function normalizeSegment(sub: OdsaySubPath, index: number): RouteSegment {
   const type = toSegmentType(sub.trafficType);
+  const laneName = toLaneName(sub);
 
   return {
     index,
     type,
-    laneName: toLaneName(sub),
+    laneName,
+    // 공공 API 경로와 같은 색 규칙을 씁니다. 두 엔진 결과가 나란히 놓여도
+    // 1호선은 늘 같은 파랑입니다. 버스는 ODsay 가 노선유형을 주지 않아
+    // 기본색입니다.
+    color: type === "subway" ? subwayColor(laneName) : MODE_COLOR[type],
     startName: sub.startName,
     endName: sub.endName,
     start: coord(sub.startY, sub.startX),
