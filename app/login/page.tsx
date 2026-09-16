@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirectIfSignedIn } from "@/lib/auth-guard";
 import { Banner, BTN_PRIMARY, BTN_SECONDARY, CARD, Field, Shell } from "@/components/app-chrome";
 import { Icon } from "@/components/icon";
+import { BrandStory, LoginBanner } from "@/components/login-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,8 @@ export default async function LoginPage({
 
   return (
     <Shell title="SIGN IN" actions={false}>
+      <LoginBanner />
+
       <div className="flex flex-col gap-space-xs pt-space-sm">
         <h2 className="font-headline-lg text-headline-lg text-primary">
           다시 오신 것을 환영합니다
@@ -100,6 +103,10 @@ export default async function LoginPage({
       <Link href="/register" className={BTN_SECONDARY}>
         회원가입
       </Link>
+
+      {/* 브랜드 문구는 맨 아래입니다. 위에 두면 로그인 폼이 한참 밀려 내려갑니다.
+          위로 올리시려면 이 한 줄을 <LoginBanner /> 바로 아래로 옮기면 됩니다. */}
+      <BrandStory />
     </Shell>
   );
 }
