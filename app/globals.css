@@ -8,7 +8,7 @@
    달라서 참고만 했습니다. 실제로 렌더된 config 가 정본입니다.
 
    원본에서 고친 것은 두 가지뿐입니다.
-     1. 폰트를 맑은 고딕 한 스택(--font-kr)으로 통일.
+     1. 폰트를 Pretendard 한 벌(--font-kr)로 통일.
         시안의 Barlow Condensed / Atkinson Hyperlegible Next 는 라틴 전용이라
         한글이 없습니다. 이 둘을 앞에 두면 한 줄 안에서 글자마다 폰트가
         달라져 어색합니다. 크기와 줄간격도 한글 기준으로 다시 잡았습니다.
@@ -86,22 +86,33 @@
 
   /* ---------- 타이포 ----------
 
-     한 스택으로 통일했습니다. 이전에는 라틴 폰트(Atkinson Hyperlegible Next,
-     Barlow Condensed)가 1순위고 한글만 폴백으로 내려갔는데, 한 줄 안에서
-     글자마다 폰트가 달라져 어색했습니다. 특히 Barlow Condensed 는 아주 좁고
-     Atkinson 은 아주 넓어서, 맑은 고딕과 섞이면 폭이 들쭉날쭉합니다.
+     Pretendard 한 벌로 통일했습니다(app/fonts.ts 에서 next/font/local 로 로드).
 
-     맑은 고딕은 Windows 기본 탑재라 내려받지 않습니다. 없는 기기는
-     Arial(라틴) → Apple SD Gothic Neo(macOS/iOS) → Noto Sans KR 순으로
-     내려갑니다. CSS 폰트 폴백은 글자 단위라 자동으로 맞춰집니다.
+     이전 스택은 맑은 고딕이 1순위였는데, 맑은 고딕은 Windows 전용입니다.
+     모바일에는 없으니 다음 후보인 Arial 로 내려가고, Arial 에는 한글이
+     없어서 한글만 또 그 다음으로 내려갑니다. CSS 폰트 폴백은 글자 단위라
+     한 줄 안에서 숫자·영문은 Arial, 한글은 기기별 시스템 폰트가 되어
+     폭과 굵기가 들쭉날쭉했습니다. 모바일 화면이 정리 안 돼 보인 원인입니다.
 
-     크기는 한글 기준으로 다시 잡았습니다. 맑은 고딕은 같은 px 에서
-     Noto Sans KR 보다 작아 보이고, 한글은 줄간격이 넉넉해야 읽힙니다.
+     Pretendard 는 한글·라틴·숫자를 한 벌로 갖고 있어 이 문제가 사라집니다.
+
+     ★ 크기 단위를 px 에서 rem 으로 바꿨습니다.
+       px 로 고정하면 기기의 "글자 크기" 설정이 무시됩니다. rem 이면
+       사용자가 키운 만큼 같이 커집니다. 1rem = 16px 이 기준입니다.
+       html 에 font-size 를 따로 박지 않는 이유가 이것입니다 — 박으면
+       접근성 설정을 다시 무시하게 됩니다.
+
      자간(letter-spacing)은 전부 0 입니다 — 한글 음절은 이미 자체 여백을
      갖고 있어서 자간을 주면 글자가 흩어져 보입니다. */
 
-  --font-kr: "Malgun Gothic", "맑은 고딕", Arial, "Apple SD Gothic Neo",
-    "Noto Sans KR", sans-serif;
+  /* --font-kr 은 여기에 두지 않습니다. 아래 @theme 블록 밖 :root 를 보세요.
+     이유가 중요합니다 — Tailwind v4 의 @theme 는 실제로 쓰이는 변수만
+     CSS 로 내보냅니다. --font-kr 은 --font-* 네임스페이스라 "font-kr"
+     유틸리티가 되는데 그 클래스를 코드 어디에서도 안 씁니다. 그래서
+     @theme 안에 두면 출력에서 통째로 빠질 수 있고, 그러면
+     --font-body-md: var(--font-kr) 이 빈 값이 되어 브라우저 기본 폰트로
+     떨어집니다. 한국어 Windows 의 브라우저 기본 폰트가 맑은 고딕이라
+     데스크톱에서는 우연히 맞아 보이고 모바일에서만 어긋났습니다. */
 
   --font-headline-xl: var(--font-kr);
   --font-headline-xl-mobile: var(--font-kr);
@@ -116,64 +127,65 @@
   --font-label-lg: var(--font-kr);
   --font-label-md: var(--font-kr);
 
-  /* 맑은 고딕에는 SemiBold(600)가 없습니다. 400 과 700 뿐이라
-     600 을 적으면 브라우저가 700 으로 올리거나 가짜로 굵게 만듭니다.
-     처음부터 700 으로 적어 둡니다. */
+  /* Pretendard Variable 은 45~920 사이 굵기를 전부 진짜로 갖고 있습니다.
+     맑은 고딕에 600 이 없어 700 으로 적어 두었던 제약은 사라졌지만,
+     이번 패치에서는 굵기를 건드리지 않습니다 — 폰트가 바뀌는 것만으로도
+     화면이 꽤 달라지므로, 굵기 조정은 눈으로 보고 따로 정합니다. */
 
-  --text-headline-xl: 40px;
-  --text-headline-xl--line-height: 48px;
+  --text-headline-xl: 2.5rem;
+  --text-headline-xl--line-height: 3rem;
   --text-headline-xl--letter-spacing: 0;
   --text-headline-xl--font-weight: 700;
 
-  --text-headline-xl-mobile: 32px;
-  --text-headline-xl-mobile--line-height: 40px;
+  --text-headline-xl-mobile: 2rem;
+  --text-headline-xl-mobile--line-height: 2.5rem;
   --text-headline-xl-mobile--letter-spacing: 0;
   --text-headline-xl-mobile--font-weight: 700;
 
-  --text-headline-lg: 26px;
-  --text-headline-lg--line-height: 36px;
+  --text-headline-lg: 1.625rem;
+  --text-headline-lg--line-height: 2.25rem;
   --text-headline-lg--letter-spacing: 0;
   --text-headline-lg--font-weight: 700;
 
-  --text-headline-md: 20px;
-  --text-headline-md--line-height: 28px;
+  --text-headline-md: 1.25rem; /* h1 */
+  --text-headline-md--line-height: 1.75rem;
   --text-headline-md--letter-spacing: 0;
   --text-headline-md--font-weight: 700;
 
-  --text-headline-sm: 17px;
-  --text-headline-sm--line-height: 24px;
+  --text-headline-sm: 1.125rem; /* h2 — 17px → 18px */
+  --text-headline-sm--line-height: 1.625rem;
   --text-headline-sm--letter-spacing: 0;
   --text-headline-sm--font-weight: 700;
 
-  --text-body-lg: 16px;
-  --text-body-lg--line-height: 26px;
+  --text-body-lg: 1rem; /* button */
+  --text-body-lg--line-height: 1.625rem;
   --text-body-lg--font-weight: 400;
 
-  --text-body-lg-bold: 16px;
-  --text-body-lg-bold--line-height: 26px;
+  --text-body-lg-bold: 1rem;
+  --text-body-lg-bold--line-height: 1.625rem;
   --text-body-lg-bold--font-weight: 700;
 
-  --text-body-md: 15px;
-  --text-body-md--line-height: 24px;
+  --text-body-md: 0.9375rem; /* 본문 15px */
+  --text-body-md--line-height: 1.5rem;
   --text-body-md--font-weight: 400;
 
-  --text-body-md-bold: 15px;
-  --text-body-md-bold--line-height: 24px;
+  --text-body-md-bold: 0.9375rem;
+  --text-body-md-bold--line-height: 1.5rem;
   --text-body-md-bold--font-weight: 700;
 
-  --text-label-lg: 13px;
-  --text-label-lg--line-height: 18px;
+  --text-label-lg: 0.875rem; /* caption — 13px → 14px */
+  --text-label-lg--line-height: 1.25rem;
   --text-label-lg--letter-spacing: 0;
   --text-label-lg--font-weight: 700;
 
-  --text-label-md: 12px;
-  --text-label-md--line-height: 17px;
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1.0625rem;
   --text-label-md--letter-spacing: 0;
   --text-label-md--font-weight: 700;
 
   /* 도착 시각·소요시간처럼 숫자가 커야 하는 자리 */
-  --text-code-time: 18px;
-  --text-code-time--line-height: 22px;
+  --text-code-time: 1.125rem;
+  --text-code-time--line-height: 1.375rem;
   --text-code-time--letter-spacing: 0;
   --text-code-time--font-weight: 700;
 
@@ -199,6 +211,16 @@
   --radius-xl: 0.5rem;
 }
 
+/* 폰트 스택은 @theme 밖에 둡니다. 여기 있으면 Tailwind 가 손대지 않고
+   항상 그대로 출력됩니다.
+
+   --font-pretendard 는 app/layout.tsx 의 <html className={pretendard.variable}>
+   가 심어 줍니다. 로드 전이나 실패 시에는 뒤의 시스템 폰트로 내려갑니다. */
+:root {
+  --font-kr: var(--font-pretendard), system-ui, -apple-system,
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
 @layer base {
   html {
     color-scheme: light;
@@ -214,7 +236,8 @@
   }
 
   body {
-    font-family: var(--font-body-md);
+    /* 유틸리티 클래스가 없어도 본문이 Pretendard 로 나오도록 한 번 더 못 박습니다. */
+    font-family: var(--font-kr);
     /* 한국어는 단어 중간에서 끊기면 읽기 나쁩니다 */
     word-break: keep-all;
     overscroll-behavior-y: none;
