@@ -100,7 +100,7 @@ export async function purgeExpiredCache(): Promise<number> {
 
 /** 외부 API 호출을 기록합니다. 캐시 적중률과 호출량을 여기서 계산합니다. */
 export async function logApiCall(entry: {
-  provider: "odsay" | "kakao";
+  provider: "odsay" | "kakao" | "seoul";
   endpoint: string;
   statusCode?: number;
   responseTimeMs?: number;
