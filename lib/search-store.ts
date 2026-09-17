@@ -207,3 +207,69 @@ function recentSnapshot(): RecentPair[] {
 export function useRecent(): RecentPair[] {
   return useSyncExternalStore(subscribe, recentSnapshot, () => NO_RECENT);
 }
+
+/* ---------------- 검색 폼 미리 채우기 ---------------- */
+
+/**
+ * 홈의 최근 검색 칩 → 검색 화면으로 "이 출발·도착으로 폼을 채워라"를 넘깁니다.
+ *
+ * 왜 URL 쿼리(?from=37.55,126.97)가 아닌가
+ *   이 파일 머리에 적힌 이유 그대로입니다. 좌표는 사용자의 위치라
+ *   주소창·방문 기록·리퍼러에 남기지 않습니다. 같은 이유로 여기도
+ *   sessionStorage 를 씁니다.
+ *
+ * 왜 한 번 쓰고 버리는가
+ *   남겨 두면 /search 를 새로 열 때마다 지난 검색이 되살아납니다.
+ *   "빈 검색 화면"을 볼 방법이 없어집니다. 검색 화면이 마운트되면
+ *   clearPrefill 로 지웁니다.
+ */
+
+const PREFILL_KEY = "moveone:prefill";
+
+export type Prefill = { departure: Place; arrival: Place };
+
+export function savePrefill(value: Prefill): void {
+  try {
+    sessionStorage.setItem(PREFILL_KEY, JSON.stringify(value));
+  } catch {
+    /* 무시 — 못 넘기면 빈 검색 화면이 뜰 뿐입니다 */
+  }
+}
+
+/**
+ * 읽기만 합니다. 지우지 않습니다.
+ *
+ * 왜 읽기와 지우기를 나눴나
+ *   검색 화면은 이 값을 useState 초기화 함수에서 읽습니다. 효과 안에서
+ *   setState 로 채우면 렌더가 한 번 더 돌고, react-hooks/set-state-in-effect
+ *   규칙에도 걸립니다. 그런데 초기화 함수는 개발 모드(StrictMode)에서
+ *   **두 번 실행**됩니다. 읽으면서 지워버리면 두 번째 호출이 null 을
+ *   돌려주고, React 가 그 결과를 쓰면 값이 사라집니다.
+ *   그래서 읽기는 몇 번을 불러도 같은 값이어야 합니다.
+ */
+export function peekPrefill(): Prefill | null {
+  try {
+    const raw = sessionStorage.getItem(PREFILL_KEY);
+    if (raw === null) return null;
+    const parsed = JSON.parse(raw) as Prefill;
+    if (typeof parsed?.departure?.lat !== "number") return null;
+    if (typeof parsed?.arrival?.lat !== "number") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 지웁니다. 검색 화면이 마운트된 뒤 효과에서 한 번 부릅니다.
+ *
+ * 지우지 않으면 /search 를 새로 열 때마다 지난 검색이 되살아나서
+ * "빈 검색 화면"을 볼 방법이 없어집니다.
+ */
+export function clearPrefill(): void {
+  try {
+    sessionStorage.removeItem(PREFILL_KEY);
+  } catch {
+    /* 무시 */
+  }
+}
