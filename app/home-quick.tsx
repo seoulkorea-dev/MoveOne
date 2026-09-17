@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon";
-import { useRecent } from "@/lib/search-store";
+import { savePrefill, useRecent } from "@/lib/search-store";
 import { log } from "@/lib/logger";
 import type { Place } from "@/lib/routes";
+import type { RecentPair } from "@/lib/search-store";
 
 /**
  * 시안의 검색 모듈과 자주 가는 곳 칩.
@@ -17,22 +18,52 @@ import type { Place } from "@/lib/routes";
  * 검색창은 여기서 입력받지 않고 /search 로 넘깁니다. 자동완성·디바운스·
  * 수단 선택이 전부 그 화면에 있어서, 두 곳에 같은 로직을 두면 반드시
  * 한쪽이 뒤처집니다.
+ *
+ * ★ 2026-09-18 — 최근 검색 칩이 실제로 동작하게 고쳤습니다.
+ *
+ *   예전에는 칩을 눌러도 `/search` 로 가기만 했습니다. 누른 장소가
+ *   전달되지 않아서 **빈 검색 화면**이 떴습니다. 사용자는 "강남역을
+ *   눌렀으니 그 경로가 검색되겠지" 하고 누르는데 아무것도 채워져 있지
+ *   않으니, 기능이 있는 것처럼 보이면서 없는 상태였습니다.
+ *
+ *   pair 안에 departure·arrival 이 이미 들어 있었습니다. 그것을
+ *   savePrefill 로 넘기고 검색 화면이 폼을 채웁니다.
+ *
+ *   URL 쿼리(?from=37.55,126.97)를 쓰지 않은 이유는 search-store.ts
+ *   머리에 적힌 것과 같습니다 — 좌표는 주소창·방문 기록에 남기지
+ *   않습니다.
  */
-export function HomeQuick() {
+export function HomeQuick({ login }: { login: string }) {
   const router = useRouter();
   const recent = useRecent();
 
-  function go(reason: string) {
-    log.debug("홈 → 검색", { reason });
+  function goSearch() {
+    log.debug("홈 → 검색", { reason: "search-bar" });
+    router.push("/search");
+  }
+
+  function goRecent(pair: RecentPair) {
+    log.debug("홈 → 검색", {
+      reason: "recent-chip",
+      from: pair.departure.name ?? pair.departure.address,
+      to: pair.arrival.name ?? pair.arrival.address,
+    });
+    savePrefill({ departure: pair.departure, arrival: pair.arrival });
     router.push("/search");
   }
 
   return (
     <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_12px_rgba(0,44,116,0.06)] p-space-sm flex flex-col gap-space-sm">
+      {/* 인사말. 예전에는 아래쪽 별도 카드에 있었는데, 그 카드가 이 검색창과
+          같은 곳으로 가는 중복 블록이라 없앴습니다. 문구만 여기로 옮깁니다. */}
+      <p className="px-space-xs pt-space-xxs font-label-lg text-label-lg text-on-surface-variant tracking-normal">
+        <span className="text-on-surface font-bold">{login}</span>님, 어디로 가시나요?
+      </p>
+
       {/* 검색창 모양이지만 실제로는 버튼입니다 */}
       <button
         type="button"
-        onClick={() => go("search-bar")}
+        onClick={goSearch}
         data-log="home.search"
         className="flex items-center gap-space-xs bg-surface-container-low rounded-lg px-space-md py-3 w-full text-left min-h-[44px] hover:bg-surface-container transition-colors"
       >
@@ -55,7 +86,7 @@ export function HomeQuick() {
             <button
               key={`${pair.arrival.lat}-${pair.arrival.lng}-${i}`}
               type="button"
-              onClick={() => go("recent-chip")}
+              onClick={() => goRecent(pair)}
               data-log="home.recent"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors flex-shrink-0 min-h-[36px]"
             >

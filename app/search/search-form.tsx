@@ -5,13 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Banner, BTN_PRIMARY, INPUT_CLASS, SectionTitle } from "@/components/app-chrome";
 import {
+  clearPrefill,
   clearRecent,
+  peekPrefill,
   pushRecent,
   saveSearch,
   useRecent,
   type SearchMode,
 } from "@/lib/search-store";
 import type { Place } from "@/lib/routes";
+import type { Prefill } from "@/lib/search-store";
 import { log } from "@/lib/logger";
 
 const CHIP_BASE =
@@ -38,10 +41,24 @@ const MODES: { key: SearchMode; label: string; icon: string }[] = [
 
 export default function SearchForm() {
   const router = useRouter();
-  const [departure, setDeparture] = useState<Place | null>(null);
-  const [arrival, setArrival] = useState<Place | null>(null);
-  const [depText, setDepText] = useState("");
-  const [arrText, setArrText] = useState("");
+
+  /**
+   * 홈의 최근 검색 칩에서 넘어온 값.
+   *
+   * 효과가 아니라 **초기화 함수**에서 읽습니다. 효과 안에서 setState 로
+   * 채우면 첫 화면이 빈 폼으로 한 번 그려진 뒤 다시 그려지고,
+   * react-hooks/set-state-in-effect 규칙에도 걸립니다. 초기화 함수에서
+   * 읽으면 처음부터 채워진 채로 한 번만 그립니다.
+   *
+   * peekPrefill 은 읽기만 하고 지우지 않습니다. 지우는 일은 아래 효과가
+   * 합니다 — 그쪽은 setState 를 하지 않으므로 규칙에 걸리지 않습니다.
+   */
+  const [prefill] = useState<Prefill | null>(() => peekPrefill());
+
+  const [departure, setDeparture] = useState<Place | null>(prefill?.departure ?? null);
+  const [arrival, setArrival] = useState<Place | null>(prefill?.arrival ?? null);
+  const [depText, setDepText] = useState(prefill ? placeLabel(prefill.departure) : "");
+  const [arrText, setArrText] = useState(prefill ? placeLabel(prefill.arrival) : "");
   // 홈 화면의 이동수단 타일이 /search?mode=subway 로 들어옵니다.
   // 값이 이상하면 조용히 "전체" 로 둡니다 — 잘못된 쿼리로 화면이 깨지면 안 됩니다.
   const params = useSearchParams();
@@ -54,6 +71,22 @@ export default function SearchForm() {
   const [notice, setNotice] = useState<string | null>(null);
   /** 지하철로 못 찾았을 때 '전체로 다시 검색' 버튼을 보일지 */
   const [retryAll, setRetryAll] = useState(false);
+
+  /**
+   * 넘겨받은 값을 지웁니다. 위에서 이미 읽어 두었습니다.
+   *
+   * setState 를 하지 않습니다 — 그래서 효과로 둬도 렌더가 더 돌지 않고
+   * react-hooks/set-state-in-effect 에도 걸리지 않습니다.
+   * StrictMode 가 두 번 실행해도 두 번 지울 뿐이라 문제없습니다.
+   */
+  useEffect(() => {
+    if (prefill === null) return;
+    clearPrefill();
+    log.debug("검색 폼 미리 채움", {
+      from: prefill.departure.name ?? prefill.departure.address,
+      to: prefill.arrival.name ?? prefill.arrival.address,
+    });
+  }, [prefill]);
 
   const canSearch = departure !== null && arrival !== null && !loading;
 
@@ -352,6 +385,24 @@ function PlaceField({
   // 입력할 때마다 호출하면 카카오 API 한도를 낭비합니다.
   // 250ms 쉬었을 때만 보냅니다. 이 값을 늘리거나 지우지 마세요.
   useEffect(() => {
+    /**
+     * ★ 선택이 끝난 값은 다시 찾지 않습니다.
+     *
+     * 예전 증상: 목록에서 "광화문 광장"을 고르면 목록이 닫혔다가 곧바로
+     * 다시 열렸습니다.
+     *
+     * 원인: 항목을 고를 때 onText(place.name) 으로 입력칸을 채웁니다.
+     * 그러면 query 가 바뀌고, 이 효과가 "사용자가 입력했다"고 보고 다시
+     * 돌아 setOpen(true) 로 덮어썼습니다. setOpen(false) 는 제대로
+     * 실행됐지만 그 뒤에 이 효과가 이겼던 것입니다.
+     *
+     * 고친 방법: picked 가 있고 그 이름이 입력칸 값과 같으면 = 방금
+     * 선택했거나 홈에서 넘어와 채워진 값이므로 찾지 않습니다.
+     * 다시 타이핑하면 onChange 가 onPick(null) 을 불러 picked 가 비므로
+     * 정상적으로 다시 찾습니다.
+     */
+    if (picked !== null && placeLabel(picked) === query) return;
+
     if (!active) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
@@ -398,7 +449,8 @@ function PlaceField({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, active, id]);
+    // picked 가 바뀌면 다시 판단해야 하므로 의존성에 넣습니다.
+  }, [query, active, id, picked]);
 
   // 입력이 두 글자 미만으로 줄면 직전 결과를 보여주지 않습니다.
   const visibleOptions = active ? options : [];
@@ -430,7 +482,8 @@ function PlaceField({
           onText(event.target.value);
           onPick(null); // 다시 타이핑하면 선택이 해제됩니다
         }}
-        onFocus={() => visibleOptions.length > 0 && setOpen(true)}
+        // 선택이 끝난 뒤에는 입력칸을 눌러도 옛 목록을 다시 띄우지 않습니다.
+        onFocus={() => picked === null && visibleOptions.length > 0 && setOpen(true)}
       />
 
       {/* 선택됐는지 눈으로 보여야 합니다. 검색 버튼 활성화 조건이 이것입니다. */}
