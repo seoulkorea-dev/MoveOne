@@ -214,10 +214,17 @@
 /* 폰트 스택은 @theme 밖에 둡니다. 여기 있으면 Tailwind 가 손대지 않고
    항상 그대로 출력됩니다.
 
-   --font-pretendard 는 app/layout.tsx 의 <html className={pretendard.variable}>
-   가 심어 줍니다. 로드 전이나 실패 시에는 뒤의 시스템 폰트로 내려갑니다. */
+   "Pretendard Variable" 은 app/layout.tsx 가 불러오는 dynamic subset CSS 가
+   정의합니다(cdnjs, 유니코드 범위별 86조각). "Pretendard" 는 기기에 이미
+   설치돼 있을 때 쓰입니다. 둘 다 없으면 뒤의 시스템 폰트로 내려갑니다. */
 :root {
-  --font-kr: var(--font-pretendard), system-ui, -apple-system,
+  /* ★ 여기에 var(--font-pretendard) 를 쓰면 안 됩니다.
+     그 변수는 next/font/local 이 <html className> 으로 심어 주던 것인데,
+     CDN 방식으로 바꾸면서 없어졌습니다. 정의되지 않은 변수를 var() 로 쓰면
+     이 선언 전체가 무효가 되고, font-family: var(--font-kr) 도 함께 무효가
+     되어 브라우저 기본 폰트로 내려갑니다. 한글이 맑은 고딕으로 보이던
+     원인이 이것이었습니다. 폰트 이름을 직접 적습니다. */
+  --font-kr: "Pretendard Variable", "Pretendard", system-ui, -apple-system,
     "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
