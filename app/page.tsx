@@ -15,20 +15,16 @@ export const dynamic = "force-dynamic";
  *
  *   1. SearchPrompt("어디로 가시나요?" + 경로 버튼)를 없앴습니다.
  *      HomeQuick 의 검색창과 **같은 곳(/search)으로 가는 같은 행동**이었습니다.
- *      화면 위쪽 절반을 같은 기능이 두 번 차지하고 있었습니다.
  *      인사말("OO님")은 사라지지 않고 HomeQuick 위로 옮겼습니다.
  *
  *   2. "아직 없습니다" 블록 셋(주변 정류장 / 리워드 / 안내 배너)을
- *      하나로 합쳤습니다. 셋 다 같은 말을 하고 있었고, 그 셋이 화면
- *      면적의 절반가량이었습니다. 정직한 건 맞지만 세 번 말할 필요는
- *      없습니다. 무엇이 왜 없는지는 한 덩어리에 그대로 남겼습니다.
+ *      하나로 합쳤습니다. 셋 다 같은 말을 하면서 화면 면적의 절반을
+ *      쓰고 있었습니다.
  *
- *   3. 이동수단 배지를 정보성으로 바꿨습니다. "가능"이 셋 붙어 있으면
- *      배지가 아무 말도 하지 않습니다. 어떤 데이터로 도는지를 적습니다.
+ *   3. 이동수단 타일에 **시안의 색을 넣었습니다**. 자세한 것은 MODES 주석.
  *
  *   넣지 않은 것: 즐겨찾기(회사·집), 실시간 도착, 퇴근길 추천, 프로모션,
- *   모빌리티 팁. 시안에는 있지만 **전부 하드코딩 가짜 데이터**가 됩니다.
- *   붙일 데이터가 생기면 그때 넣습니다.
+ *   모빌리티 팁. 시안에는 있지만 붙일 데이터가 없습니다.
  *
  * Shell 을 쓰지 않는 이유: 시안의 헤더가 표준 헤더와 달라서
  * (위치 표시 + 아바타) 여기서 직접 그립니다.
@@ -93,33 +89,122 @@ function HomeHeader() {
 
 /* ---------------- 이동수단 8칸 ---------------- */
 
+/**
+ * ★ 색은 Stitch 시안 screen.png 에서 **픽셀로 뽑은 값**입니다. 눈대중이 아닙니다.
+ *
+ *     지하철    타일 #EDF3FF  아이콘 #0047BA
+ *     시내버스  타일 #E0F2FE  아이콘 #0284C7
+ *     택시      타일 #FEF3C7  아이콘 #B45309
+ *     따릉이    타일 #DCFCE7  아이콘 #15803D
+ *     준비중    타일 #F1F5F9  아이콘 #475569  배지 #E2E8F0 / 글자 #475569
+ *
+ *   시안에 없는 '전체'는 MoveOne 토큰에서 가져왔습니다 (#DAE2FF / #002C74).
+ *   지하철+버스를 함께 찾는 유일한 수단이라 가장 진한 파랑을 줬습니다.
+ *
+ * ★ 왜 클래스 문자열을 통째로 적나
+ *   Tailwind 는 **소스에 글자 그대로 있는 클래스만** CSS 로 만듭니다.
+ *   `bg-[${color}]` 처럼 조립하면 찾지 못해 색이 나오지 않습니다.
+ *   그래서 완성된 문자열을 각 항목에 박아 둡니다.
+ *
+ * ★ 배지 문구는 시안과 다릅니다
+ *   시안은 HOT / 실시간 / 예약 인데, 지금 실시간 도착정보도 택시 예약도
+ *   없습니다. 색은 시안대로 가되 문구는 사실에 맞췄습니다.
+ *
+ * ★ 칸 구성
+ *   시안에는 '전체'가 없고 '킥보드'가 있습니다. '전체'는 실제로 동작하는
+ *   핵심 기능이라 맨 앞에 두고, 아직 계획이 없는 '킥보드'를 뺐습니다.
+ *   4×2 격자는 그대로입니다.
+ */
 type Mode = {
   icon: string;
   label: string;
   /** 갈 곳. 없으면 1차 범위 밖이라 비활성입니다 */
   href?: string;
-  /**
-   * 무엇으로 도는지. "가능" 같은 말은 배지 자리를 쓰고도 아무 정보를
-   * 주지 않습니다. 어떤 데이터를 쓰는지 적습니다.
-   */
-  badge?: string;
+  /** 무엇으로 도는지. "가능" 같은 말은 자리만 쓰고 정보를 주지 않습니다 */
+  badge: string;
+  tile: string;
+  glyph: string;
+  chip: string;
 };
 
+const OFF_TILE = "bg-[#F1F5F9]";
+const OFF_GLYPH = "text-[#475569]";
+const OFF_CHIP = "bg-[#E2E8F0] text-[#475569]";
+
 const MODES: Mode[] = [
-  { icon: "subway", label: "지하철", href: "/search?mode=subway", badge: "공공API" },
-  { icon: "directions_bus", label: "시내버스", href: "/search?mode=bus", badge: "공공API" },
-  { icon: "commute", label: "전체", href: "/search?mode=all", badge: "복합" },
-  { icon: "local_taxi", label: "택시 예약" },
-  { icon: "train", label: "공항철도" },
-  { icon: "directions_railway", label: "기차·KTX" },
-  { icon: "pedal_bike", label: "따릉이" },
-  { icon: "airport_shuttle", label: "고속·시외" },
+  {
+    icon: "commute",
+    label: "전체",
+    href: "/search?mode=all",
+    badge: "복합",
+    tile: "bg-[#DAE2FF]",
+    glyph: "text-[#002C74]",
+    chip: "bg-[#002C74] text-white",
+  },
+  {
+    icon: "subway",
+    label: "지하철",
+    href: "/search?mode=subway",
+    badge: "공공API",
+    tile: "bg-[#EDF3FF]",
+    glyph: "text-[#0047BA]",
+    chip: "bg-[#0047BA] text-white",
+  },
+  {
+    icon: "directions_bus",
+    label: "시내버스",
+    href: "/search?mode=bus",
+    badge: "공공API",
+    tile: "bg-[#E0F2FE]",
+    glyph: "text-[#0284C7]",
+    chip: "bg-[#0284C7] text-white",
+  },
+  {
+    icon: "local_taxi",
+    label: "택시 호출",
+    badge: "준비중",
+    tile: OFF_TILE,
+    glyph: OFF_GLYPH,
+    chip: OFF_CHIP,
+  },
+  {
+    icon: "pedal_bike",
+    label: "따릉이·PM",
+    badge: "준비중",
+    tile: OFF_TILE,
+    glyph: OFF_GLYPH,
+    chip: OFF_CHIP,
+  },
+  {
+    icon: "train",
+    label: "공항철도",
+    badge: "준비중",
+    tile: OFF_TILE,
+    glyph: OFF_GLYPH,
+    chip: OFF_CHIP,
+  },
+  {
+    icon: "directions_railway",
+    label: "기차·KTX",
+    badge: "준비중",
+    tile: OFF_TILE,
+    glyph: OFF_GLYPH,
+    chip: OFF_CHIP,
+  },
+  {
+    icon: "airport_shuttle",
+    label: "고속·시외",
+    badge: "준비중",
+    tile: OFF_TILE,
+    glyph: OFF_GLYPH,
+    chip: OFF_CHIP,
+  },
 ];
 
 function ModeGrid() {
   return (
     <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_10px_rgba(0,44,116,0.05)] p-space-md">
-      <div className="grid grid-cols-4 gap-y-4 gap-x-2">
+      <div className="grid grid-cols-4 gap-y-5 gap-x-2">
         {MODES.map((mode) => (
           <ModeTile key={mode.label} mode={mode} />
         ))}
@@ -135,25 +220,20 @@ function ModeTile({ mode }: { mode: Mode }) {
   const inner = (
     <>
       <div
-        className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-          mode.href
-            ? "bg-secondary-fixed group-hover:bg-secondary"
-            : "bg-surface-container-high"
+        className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-all ${mode.tile} ${
+          mode.href ? "group-hover:shadow-md group-hover:-translate-y-0.5" : ""
         }`}
       >
-        <Icon
-          name={mode.icon}
-          size={26}
-          className={mode.href ? "text-secondary group-hover:text-on-secondary" : "text-outline"}
-        />
-        {mode.badge ? (
-          <span className="absolute -top-1.5 -right-2 px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary font-label-md text-[9px] font-bold leading-none whitespace-nowrap">
-            {mode.badge}
-          </span>
-        ) : null}
+        <Icon name={mode.icon} size={26} className={mode.glyph} />
+        {/* 배지는 타일 위로 살짝 걸칩니다. 시안과 같은 위치입니다. */}
+        <span
+          className={`absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-[3px] rounded-md font-label-md text-[9px] font-bold leading-none whitespace-nowrap shadow-sm ${mode.chip}`}
+        >
+          {mode.badge}
+        </span>
       </div>
       <span
-        className={`mt-1.5 font-body-md-bold text-[12px] text-center ${
+        className={`mt-2 font-body-md-bold text-[12px] text-center ${
           mode.href ? "text-on-surface" : "text-outline"
         }`}
       >
@@ -165,7 +245,7 @@ function ModeTile({ mode }: { mode: Mode }) {
   if (!mode.href) {
     return (
       <div
-        className="flex flex-col items-center opacity-70 cursor-not-allowed"
+        className="flex flex-col items-center opacity-80 cursor-not-allowed"
         aria-disabled="true"
         title="1차 범위 밖입니다"
       >
