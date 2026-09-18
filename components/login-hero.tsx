@@ -48,25 +48,40 @@ export function LoginBanner() {
 }
 
 /**
- * 브랜드 문구. 회원가입 버튼 아래에 놓습니다.
+ * 배너 바로 아래 브랜드 문구. 로그인 폼 위에 놓습니다.
  *
- * 제목을 headline-md(20px)로 둔 이유: 이 화면의 주 제목은 "다시 오신 것을
- * 환영합니다"(headline-lg, 26px)입니다. 브랜드 문구가 더 크면 무엇을 하러 온
- * 화면인지 흐려집니다.
+ * 이 화면의 주 제목 자리입니다. 예전에는 "다시 오신 것을 환영합니다"가
+ * 여기 있었는데, 처음 오는 사람에게는 맞지 않는 말이라 뺐습니다.
+ *
+ * 줄바꿈(<br />)을 그대로 둔 이유: 끊기는 위치가 문구의 일부입니다.
+ * 한 줄로 합치면 화면 폭에 따라 엉뚱한 곳에서 끊깁니다.
  */
-export function BrandStory() {
+export function BrandHeadline() {
   return (
-    <section className="flex flex-col gap-space-sm border-t border-outline-variant pt-space-lg">
+    <section className="flex flex-col gap-space-xs pt-space-sm">
       <p className="font-label-lg text-label-lg text-secondary tracking-normal">
         모든 이동을 한 번에
       </p>
 
-      <h2 className="font-headline-md text-headline-md text-primary">
+      <h2 className="font-headline-lg text-headline-lg text-primary">
         이동의 경험을
         <br />
         새롭게 만듭니다
       </h2>
+    </section>
+  );
+}
 
+/**
+ * 회원가입 버튼 아래 브랜드 설명.
+ *
+ * ★ "모든 이동을 한 번에" 와 "이동의 경험을 새롭게 만듭니다" 는 여기 있다가
+ *   BrandHeadline 으로 올라갔습니다. 같은 말이 한 화면에 두 번 나오면
+ *   안 되므로 여기서는 뺐습니다. 설명 두 문단만 남깁니다.
+ */
+export function BrandStory() {
+  return (
+    <section className="flex flex-col gap-space-sm border-t border-outline-variant pt-space-lg">
       {/*
         두 문단을 하나로 합치지 않은 이유: 줄바꿈 위치가 문구의 일부입니다.
         합치면 화면 폭에 따라 엉뚱한 곳에서 끊깁니다.

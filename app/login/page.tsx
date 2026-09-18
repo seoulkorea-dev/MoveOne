@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirectIfSignedIn } from "@/lib/auth-guard";
 import { Banner, BTN_PRIMARY, BTN_SECONDARY, CARD, Field, Shell } from "@/components/app-chrome";
 import { Icon } from "@/components/icon";
-import { BrandStory, LoginBanner } from "@/components/login-hero";
+import { BrandHeadline, BrandStory, LoginBanner } from "@/components/login-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +25,14 @@ export default async function LoginPage({
     <Shell title="SIGN IN" actions={false}>
       <LoginBanner />
 
-      <div className="flex flex-col gap-space-xs pt-space-sm">
-        <h2 className="font-headline-lg text-headline-lg text-primary">
-          다시 오신 것을 환영합니다
-        </h2>
-        <p className="font-body-md text-body-md text-on-surface-variant">
-          저장된 경로와 이동 조건을 이어서 사용하세요.
-        </p>
-      </div>
+      {/* 배너 바로 아래는 브랜드 문구입니다.
+          예전에는 "다시 오신 것을 환영합니다 / 저장된 경로와 이동 조건을
+          이어서 사용하세요"가 있었습니다. 뺀 이유는 두 가지입니다.
+            - 처음 오는 사람에게는 "다시 오신"이 맞지 않습니다
+            - 아래 BrandStory 와 같은 자리를 두 번 쓰는 셈이었습니다
+          BrandHeadline 을 위로 올렸으므로 BrandStory 에서는 같은 문구를
+          뺐습니다. 같은 말이 한 화면에 두 번 나오면 안 됩니다. */}
+      <BrandHeadline />
 
       {reset ? (
         <Banner tone="ok" icon="check_circle" title="비밀번호가 변경되었습니다">
