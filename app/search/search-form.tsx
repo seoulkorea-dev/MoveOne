@@ -17,8 +17,20 @@ import type { Place } from "@/lib/routes";
 import type { Prefill } from "@/lib/search-store";
 import { log } from "@/lib/logger";
 
+/**
+ * 칩 공통 클래스.
+ *
+ * ★ w-full + h-10 + justify-center 인 이유
+ *   예전에는 `shrink-0 px-space-md ... min-h-[36px]` 이라 **글자 길이만큼만**
+ *   넓어졌습니다. 그래서 "지금 출발"과 "출발 시각 지정"의 폭이 달랐습니다.
+ *   이 클래스를 쓰는 줄은 전부 grid 라서, w-full 이면 칸 폭을 그대로 받습니다.
+ *   높이도 min-h(최소값)이 아니라 h-10(고정)이어야 "같은 크기"가 보장됩니다 —
+ *   최소값은 내용에 따라 늘어납니다.
+ *   px 는 space-md(12px)에서 space-sm(8px)으로 줄였습니다. 좁은 칸에서
+ *   글자가 먼저 잘리는 것을 막습니다.
+ */
 const CHIP_BASE =
-  "shrink-0 px-space-md py-2 rounded-lg font-label-lg text-label-lg transition-all min-h-[36px] flex items-center gap-1.5";
+  "w-full h-10 px-space-sm rounded-lg font-label-lg text-label-lg transition-all flex items-center justify-center gap-1.5";
 const CHIP_ON = `${CHIP_BASE} bg-primary-container text-on-primary shadow-sm`;
 const CHIP_OFF = `${CHIP_BASE} bg-surface-container-lowest text-on-surface-variant hover:text-on-surface shadow-sm`;
 const CHIP_DISABLED = `${CHIP_BASE} bg-surface-container-low text-outline cursor-not-allowed`;
@@ -236,8 +248,9 @@ export default function SearchForm() {
         </button>
       ) : null}
 
-      {/* 출발 시각 — 1차는 '지금 출발'만 지원합니다 */}
-      <div className="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5">
+      {/* 출발 시각 — 1차는 '지금 출발'만 지원합니다.
+          3칸 격자라 세 버튼의 폭이 항상 같습니다. 가로 스크롤은 없앴습니다. */}
+      <div className="grid grid-cols-3 gap-space-xs py-0.5">
         <span className={CHIP_ON}>
           <Icon name="schedule" size={16} filled />
           지금 출발
@@ -255,7 +268,9 @@ export default function SearchForm() {
         <h2 className="font-label-lg text-label-lg text-on-surface-variant tracking-normal">
           교통수단
         </h2>
-        <div className="flex items-center gap-space-xs flex-wrap" role="radiogroup">
+        {/* 3칸 격자. flex-wrap 이면 화면 폭에 따라 두 줄로 접히고
+            버튼 폭도 제각각이 됩니다. */}
+        <div className="grid grid-cols-3 gap-space-xs" role="radiogroup">
           {MODES.map((m) => (
             <button
               key={m.key}
@@ -279,9 +294,8 @@ export default function SearchForm() {
         </p>
       </section>
 
-      <Banner tone="info" icon="map" title="수도권만 검색됩니다">
-        1차 서비스 지역은 서울·경기·인천입니다. 그 밖의 출발·도착지는 검색 전에 안내합니다.
-      </Banner>
+      {/* "수도권만 검색됩니다" 안내는 맨 아래 검색 버튼과 한 덩어리로 옮겼습니다.
+          여기(화면 중간)에 있으면 최근 검색을 지나 내려가면서 잊힙니다. */}
 
       {recent.length > 0 ? (
         <>
@@ -320,29 +334,50 @@ export default function SearchForm() {
         </>
       ) : null}
 
-      <div className="flex flex-col gap-space-xs">
-        <button
-          type="button"
-          className={BTN_PRIMARY}
-          data-log="search.submit"
-          disabled={!canSearch}
-          onClick={() => departure && arrival && runSearch(departure, arrival, mode)}
-        >
-          <span>{loading ? "경로를 찾는 중…" : "경로 검색"}</span>
-          {loading ? null : <Icon name="search" size={18} />}
-        </button>
+      {/* ── 화면 맨 아래 — 검색 버튼 + 서비스 범위 안내 ──────────────────
+          버튼이 위, 안내가 아래입니다. 여기까지 내려온 사람이 하려는 일은
+          검색이므로 버튼이 먼저 눈에 들어와야 하고, 안내는 그 아래에서
+          조건을 덧붙이는 자리입니다.
+          Banner 컴포넌트를 쓰지 않은 이유: 버튼과 안내가 한 카드 안에서
+          선으로 나뉘어야 하는데, Banner 는 그 구조를 만들지 못합니다. */}
+      <section className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+        <div className="p-space-base flex flex-col gap-space-xs">
+          <button
+            type="button"
+            className={BTN_PRIMARY}
+            data-log="search.submit"
+            disabled={!canSearch}
+            onClick={() => departure && arrival && runSearch(departure, arrival, mode)}
+          >
+            <span>{loading ? "경로를 찾는 중…" : "경로 검색"}</span>
+            {loading ? null : <Icon name="search" size={18} />}
+          </button>
 
-        {/* 버튼이 왜 눌리지 않는지 보이지 않으면 고장으로 느껴집니다. */}
-        {!canSearch && !loading ? (
-          <p className="font-label-md text-label-md text-on-surface-variant tracking-normal text-center">
-            {departure === null && arrival === null
-              ? "출발지와 도착지를 입력하고 목록에서 선택해 주세요."
-              : departure === null
-                ? "출발지를 목록에서 선택해 주세요."
-                : "도착지를 목록에서 선택해 주세요."}
-          </p>
-        ) : null}
-      </div>
+          {/* 버튼이 왜 눌리지 않는지 보이지 않으면 고장으로 느껴집니다. */}
+          {!canSearch && !loading ? (
+            <p className="font-label-md text-label-md text-on-surface-variant tracking-normal text-center">
+              {departure === null && arrival === null
+                ? "출발지와 도착지를 입력하고 목록에서 선택해 주세요."
+                : departure === null
+                  ? "출발지를 목록에서 선택해 주세요."
+                  : "도착지를 목록에서 선택해 주세요."}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="border-t border-outline-variant/60 flex items-start gap-space-sm px-space-base py-space-md">
+          <Icon name="map" size={20} className="text-secondary mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-body-md-bold text-body-md-bold text-on-surface">
+              수도권만 검색됩니다
+            </p>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-0.5">
+              1차 서비스 지역은 서울·경기·인천입니다. 그 밖의 출발·도착지는 검색 전에
+              안내합니다.
+            </p>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

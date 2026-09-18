@@ -19,18 +19,31 @@ import {
   type TransitRoute,
   type Place,
 } from "@/lib/routes";
+import { MODE_COLOR } from "@/lib/routing/line-colors";
 import { log } from "@/lib/logger";
 
 const SORT_KEYS: RouteSortKey[] = ["fastest", "cheapest", "fewest_transfers", "least_walk"];
 
-/** 구간 색. 진행 바와 칩이 같은 색을 써야 눈으로 이어집니다. */
-const SEGMENT_BG: Record<string, string> = {
-  walk: "bg-walk",
-  subway: "bg-subway",
-  bus: "bg-bus",
-  bike: "bg-bike",
-  taxi: "bg-taxi",
-};
+/**
+ * 구간 색. 진행 바와 칩이 같은 색을 써야 눈으로 이어집니다.
+ *
+ * ★ app/route/detail/detail-view.tsx 의 segmentColor 와 **같은 함수**입니다.
+ *
+ *   예전에는 여기만 수단별 Tailwind 클래스(bg-subway, bg-bus)를 썼습니다.
+ *   그래서 5000번 광역버스도 2호선도 전부 파랑 계열로 나왔고, 같은 경로가
+ *   목록에서는 파랑, 상세에서는 빨강·초록으로 보였습니다.
+ *
+ *   어댑터가 노선별 실제 색을 segment.color 에 담아 줍니다. 지도·상세와
+ *   같은 값을 그대로 씁니다. color 가 없는 옛 캐시 데이터를 위해 수단
+ *   기본색으로 물러섭니다.
+ *
+ *   Tailwind 클래스가 아니라 style 로 넣는 이유: 노선색은 18가지가 넘고
+ *   런타임 값이라 클래스로 만들 수 없습니다. Tailwind 는 소스에 글자
+ *   그대로 있는 클래스만 CSS 로 만듭니다.
+ */
+function segmentColor(segment: RouteSegment): string {
+  return segment.color ?? MODE_COLOR[segment.type] ?? MODE_COLOR.walk;
+}
 
 export default function ResultView() {
   const router = useRouter();
@@ -102,10 +115,20 @@ export default function ResultView() {
       ) : (
         <>
           {/* 정렬 4종 — 기획서 수락기준 항목 */}
+          {/* ★ 네 버튼을 한 줄에, 같은 크기로.
+              예전에는 두 가지 이유로 제각각이었습니다.
+                1. 선택된 버튼에만 체크 아이콘이 붙어 **고를 때마다 폭이 변함**
+                2. 글자 길이가 달라서("빠른 순" vs "환승 적은 순") 폭이 다름
+              그래서 (1) 체크 아이콘을 없애고 — 선택은 파란 배경으로 이미
+              충분히 보입니다 — (2) 4칸 격자로 폭을 균등 분배하고,
+              (3) 높이를 h-10 으로 고정했습니다.
+              글씨는 label-md(11px)입니다. label-lg(13px)로는 "환승 적은 순"이
+              좁은 화면(360px)에서 잘립니다. tracking-normal 로 자간을 붙여
+              폭을 더 아낍니다. 가로 스크롤도 없앴습니다. */}
           <section
             aria-label="경로 정렬"
             role="tablist"
-            className="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5"
+            className="grid grid-cols-4 gap-1.5 py-0.5"
           >
             {SORT_KEYS.map((key) => {
               const on = sortKey === key;
@@ -120,14 +143,13 @@ export default function ResultView() {
                     log.debug("정렬 변경", { from: sortKey, to: key });
                     setSortKey(key);
                   }}
-                  className={`shrink-0 px-space-md py-2 rounded-lg font-label-lg text-label-lg shadow-sm transition-all min-h-[36px] flex items-center gap-1.5 ${
+                  className={`w-full h-10 px-1 rounded-lg font-label-md text-label-md tracking-normal shadow-sm transition-all flex items-center justify-center ${
                     on
                       ? "bg-primary-container text-on-primary"
                       : "bg-surface-container-lowest text-on-surface-variant hover:text-on-surface"
                   }`}
                 >
-                  {on ? <Icon name="check" size={16} filled /> : null}
-                  <span>{SORT_LABEL[key]}</span>
+                  <span className="truncate">{SORT_LABEL[key]}</span>
                 </button>
               );
             })}
@@ -285,8 +307,8 @@ function ProgressBar({ segments, total }: { segments: RouteSegment[]; total: num
         return (
           <div
             key={segment.index}
-            className={`h-full ${SEGMENT_BG[segment.type] ?? "bg-outline-variant"}`}
-            style={{ width: `${pct}%` }}
+            className="h-full"
+            style={{ width: `${pct}%`, backgroundColor: segmentColor(segment) }}
             title={`${SEGMENT_LABEL[segment.type]} ${segment.durationMin ?? 0}분`}
           />
         );
@@ -316,9 +338,8 @@ function SegmentRow({ segment }: { segment: RouteSegment }) {
   return (
     <div className="flex items-center gap-space-sm">
       <span
-        className={`w-5 h-5 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0 ${
-          SEGMENT_BG[segment.type] ?? "bg-outline"
-        }`}
+        className="w-5 h-5 rounded-full text-white flex items-center justify-center font-label-md text-[10px] font-bold shrink-0"
+        style={{ backgroundColor: segmentColor(segment) }}
       >
         {SEGMENT_LABEL[segment.type].slice(0, 1)}
       </span>
@@ -329,7 +350,8 @@ function SegmentRow({ segment }: { segment: RouteSegment }) {
         </span>
         {segment.stationCount ? (
           <span className="font-label-md text-label-md text-on-surface-variant shrink-0">
-            {segment.stationCount}개 역
+            {/* 버스는 '역' 이 아니라 '정류장' 입니다. 상세 화면과 같은 규칙. */}
+            {segment.stationCount}개 {segment.type === "bus" ? "정류장" : "역"}
             {segment.durationMin ? ` (${segment.durationMin}분)` : ""}
           </span>
         ) : null}
